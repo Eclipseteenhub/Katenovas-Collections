@@ -3,28 +3,72 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Market - Cart</title>
+    <title>Cart — Katenovas Collections</title>
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
-    <header>
-      <nav>
-        <a href="index.html">Home</a>
-        <a href="products.html">Products</a>
-        <a href="cart.html">Cart</a>
-        <a href="contact.html">Contact</a>
-      </nav>
+
+    <header class="site-header">
+      <div class="header-inner">
+        <a href="index.html" class="brand-logo">
+          <span class="brand-name">Katenovas Collections</span>
+        </a>
+        <button class="nav-toggle" id="navToggle" aria-label="Open menu">&#9776;</button>
+        <nav class="site-nav" id="siteNav">
+          <button class="nav-close" id="navClose" aria-label="Close menu">&times;</button>
+          <a href="index.html" class="nav-link">Home</a>
+          <a href="products.html" class="nav-link">Products</a>
+          <a href="cart.html" class="nav-link active cart-link">
+            Cart <span class="cart-badge" id="cartBadge">0</span>
+          </a>
+          <a href="contact.html" class="nav-link">Contact</a>
+        </nav>
+      </div>
     </header>
 
-    <main>
-      <h1>Your Cart</h1>
-      <div id="cart-items"></div>
-      <div id="cart-total"></div>
-      <button id="checkout-btn">Checkout</button>
+    <main class="page-main">
+      <div class="container">
+        <h1 class="page-title">Your Cart</h1>
+
+        <div id="cartContent">
+          <div id="cartItems" class="cart-items"></div>
+
+          <div id="cartSummary" class="cart-summary hidden">
+            <div class="summary-row">
+              <span>Subtotal</span>
+              <span id="cartSubtotal">₦0</span>
+            </div>
+            <div class="summary-row summary-total">
+              <span>Total</span>
+              <span id="cartTotal">₦0</span>
+            </div>
+            <button id="whatsappBtn" class="btn btn-whatsapp btn-full">
+              <span>&#128222;</span> Order via WhatsApp
+            </button>
+            <a href="products.html" class="btn btn-outline btn-full">Continue Shopping</a>
+          </div>
+
+          <div id="emptyCart" class="empty-cart hidden">
+            <p class="empty-icon">🛒</p>
+            <h2>Your cart is empty</h2>
+            <p>Add some beautiful products to get started.</p>
+            <a href="products.html" class="btn btn-gold">Shop Now</a>
+          </div>
+        </div>
+      </div>
     </main>
 
-    <footer>
-      <p>&copy; 2026 Market. All rights reserved.</p>
+    <footer class="site-footer">
+      <div class="container">
+        <p class="brand-name-footer">Katenovas Collections</p>
+        <nav class="footer-nav">
+          <a href="index.html">Home</a>
+          <a href="products.html">Products</a>
+          <a href="cart.html">Cart</a>
+          <a href="contact.html">Contact</a>
+        </nav>
+        <p class="footer-copy">&copy; 2026 Katenovas Collections. All rights reserved.</p>
+      </div>
     </footer>
 
     <script src="app.js"></script>

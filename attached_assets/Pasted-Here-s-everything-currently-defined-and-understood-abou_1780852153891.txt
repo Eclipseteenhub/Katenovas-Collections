@@ -1,0 +1,421 @@
+Here’s everything currently defined and understood about the project and the business for **Katenovas Collections**.
+
+---
+
+# Business Overview
+
+## Business Name
+
+**Katenovas Collections**
+
+## Business Type
+
+A mobile-first fashion and lifestyle business selling:
+
+* Clothes
+* Jewelry
+* Home Accessories
+
+The business targets customers who want:
+
+* Elegant products
+* Affordable luxury
+* Stylish everyday items
+* Fast and easy ordering
+
+---
+
+# Main Goal of the Website
+
+Build a professional business website where customers can:
+
+* View products
+* View prices
+* View images
+* Search products
+* Add products to cart
+* Change quantities
+* View total order summary
+* Send orders through WhatsApp
+
+At the same time, your mum should be able to:
+
+* Login as admin
+* Add products
+* Edit products
+* Delete products
+* Upload product images
+* Change prices
+* Change stock status
+
+The website should be:
+
+* Fast
+* Simple
+* Mobile-first
+* Beginner-friendly
+* Easy to maintain
+* Easy to upgrade later
+
+---
+
+# Technical Direction
+
+## Tech Stack
+
+Only:
+
+* HTML
+* CSS
+* Vanilla JavaScript
+
+No:
+
+* React
+* Vue
+* Angular
+* Node.js
+* Firebase
+* MongoDB
+* Paid services
+
+---
+
+# Hosting Plan
+
+The website will be deployable on:
+
+Netlify
+
+Goal:
+
+* Free hosting
+* Fast deployment
+* Beginner-friendly deployment process
+
+---
+
+# Data Storage Plan
+
+## Current Version
+
+Use:
+
+* Browser `localStorage`
+
+Reason:
+
+* Simple
+* Free
+* Works immediately
+* No backend needed
+
+## Future Upgrade Path
+
+The architecture is intentionally being prepared for later upgrades like:
+
+* Google Sheets
+* Supabase
+* Online payments
+* Delivery tracking
+* Customer accounts
+* Analytics
+
+without rebuilding the entire site.
+
+---
+
+# Website Pages
+
+## Customer Pages
+
+### 1. Home Page
+
+Purpose:
+
+* Introduce the brand
+* Build trust
+* Showcase categories
+* Encourage shopping
+
+Includes:
+
+* Hero section
+* Categories
+* Trust/benefits section
+* Navigation
+* CTA buttons
+
+---
+
+### 2. Products Page
+
+Purpose:
+
+* Display all products
+
+Features:
+
+* Product cards
+* Product image
+* Product name
+* Product price
+* Description
+* Category
+* Stock status
+* Search functionality
+* Add-to-cart button
+
+---
+
+### 3. Cart Page
+
+Purpose:
+
+* Show selected items
+
+Features:
+
+* Quantity controls
+* Remove items
+* Order summary
+* Total price
+* WhatsApp checkout
+
+---
+
+### 4. Contact Page
+
+Purpose:
+
+* Provide business contact information
+
+Includes:
+
+* WhatsApp button
+* Delivery info
+* Business details
+
+---
+
+# Admin System
+
+## Admin Login Page
+
+Single admin account:
+
+### Username
+
+```txt id="km0gz5"
+@Eragbai50
+```
+
+### Password
+
+```txt id="jzk4um"
+408258
+```
+
+---
+
+## Admin Dashboard
+
+Features:
+
+* Add products
+* Edit products
+* Delete products
+* Upload product images
+* Change prices
+* Change stock status
+* Manage categories
+
+Data saves to:
+
+* `localStorage`
+
+---
+
+# Product Model
+
+Every product contains:
+
+* Product Name
+* Price
+* Description
+* Category
+* Product Image
+* Available / Out of Stock
+
+---
+
+# WhatsApp Ordering System
+
+Orders will:
+
+* Generate automatically
+* Include:
+
+  * Product names
+  * Quantities
+  * Total price
+* Open WhatsApp with ready-made message
+
+## WhatsApp Number
+
+```txt id="fskx18"
+08025497647
+```
+
+---
+
+# Design Direction
+
+## UI Style
+
+The website should feel:
+
+* Elegant
+* Premium
+* Emotional
+* Warm
+* Trustworthy
+* Easy for older users
+
+---
+
+# Chosen Color Strategy
+
+A luxury emotional palette:
+
+* Deep burgundy/wine
+* Gold accents
+* Cream backgrounds
+* White sections
+* Dark charcoal text
+
+Purpose:
+
+* Increase emotional attachment
+* Improve perceived value
+* Make first-time visitors stay longer
+* Encourage buying behavior
+
+---
+
+# User Experience Goals
+
+## Mobile First
+
+Most customers will likely visit using phones.
+
+So the design must:
+
+* Load fast
+* Use large readable text
+* Have clear buttons
+* Be easy to scroll
+* Work well on small screens
+
+---
+
+# Product Handling Strategy
+
+You specifically requested:
+
+## No fake products
+
+The website should not include random placeholder inventory.
+
+Instead:
+
+* Products will be added through the admin dashboard.
+
+However:
+
+* The system architecture is fully prepared for products immediately.
+
+---
+
+# Stock System
+
+You requested flexibility.
+
+So products can:
+
+* Show as “Available”
+* Show as “Out of Stock”
+
+Later we can upgrade to:
+
+* Hide out-of-stock items completely
+* Inventory counts
+* Auto stock updates
+
+---
+
+# File Structure
+
+```txt id="l73yvb"
+market-website/
+├── index.html
+├── products.html
+├── cart.html
+├── contact.html
+├── admin-login.html
+├── admin-dashboard.html
+├── style.css
+├── app.js
+├── admin.js
+├── assets/
+│   ├── images/
+│   │   └── products/
+│   └── icons/
+└── README.txt
+```
+
+---
+
+# Current Build Status
+
+## Completed
+
+✅ Project architecture
+✅ Folder structure
+✅ Development roadmap
+✅ All HTML page structures
+
+## Next Phase
+
+We are about to build:
+
+* `style.css`
+* `app.js`
+* `admin.js`
+
+This is where the real functionality begins:
+
+* cart system
+* search
+* admin login
+* localStorage
+* WhatsApp ordering
+* product rendering
+* image upload handling
+
+---
+
+# Important Future Reminder
+
+You said:
+
+> “I will give you a logo later.”
+
+So before we finalize branding and header polish,
+I must remember to ask you for:
+
+* logo image
+* favicon (optional)
+* brand slogan (optional)
+
+before the final UI polish stage.

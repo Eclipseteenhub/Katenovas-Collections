@@ -3,27 +3,124 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Market - Admin Dashboard</title>
+    <title>Dashboard — Katenovas Collections</title>
     <link rel="stylesheet" href="style.css" />
   </head>
-  <body>
-    <header>
-      <h1>Admin Dashboard</h1>
-      <button id="logout-btn">Logout</button>
+  <body class="admin-body">
+
+    <header class="admin-header">
+      <div class="header-inner">
+        <span class="brand-name">Admin Dashboard</span>
+        <div class="admin-header-actions">
+          <a href="index.html" target="_blank" class="btn btn-outline btn-sm">View Store</a>
+          <button id="logoutBtn" class="btn btn-ghost btn-sm">Logout</button>
+        </div>
+      </div>
     </header>
 
-    <main>
-      <section id="products-section">
-        <h2>Manage Products</h2>
-        <button id="add-product-btn">Add Product</button>
-        <div id="admin-products-list"></div>
-      </section>
+    <main class="admin-main">
+      <div class="container">
 
-      <section id="orders-section">
-        <h2>Orders</h2>
-        <div id="orders-list"></div>
-      </section>
+        <div class="admin-toolbar">
+          <div class="admin-stats">
+            <div class="stat-card">
+              <span class="stat-number" id="totalProducts">0</span>
+              <span class="stat-label">Total Products</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-number" id="inStockCount">0</span>
+              <span class="stat-label">In Stock</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-number" id="outStockCount">0</span>
+              <span class="stat-label">Out of Stock</span>
+            </div>
+          </div>
+          <button id="addProductBtn" class="btn btn-gold">+ Add Product</button>
+        </div>
+
+        <div id="adminProductsList" class="admin-products-list"></div>
+        <p id="noProducts" class="empty-message hidden">No products yet. Add your first product above.</p>
+
+      </div>
     </main>
+
+    <div id="productModal" class="modal-overlay hidden">
+      <div class="modal">
+        <div class="modal-header">
+          <h2 id="modalTitle">Add Product</h2>
+          <button id="closeModal" class="modal-close" aria-label="Close">&times;</button>
+        </div>
+
+        <form id="productForm" novalidate>
+          <input type="hidden" id="productId" />
+
+          <div class="form-group">
+            <label for="productName">Product Name <span class="required">*</span></label>
+            <input type="text" id="productName" placeholder="e.g. Gold Chain Necklace" required />
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="productPrice">Price (₦) <span class="required">*</span></label>
+              <input type="number" id="productPrice" placeholder="e.g. 5000" min="0" required />
+            </div>
+            <div class="form-group">
+              <label for="productCategory">Category <span class="required">*</span></label>
+              <select id="productCategory" required>
+                <option value="">Select category</option>
+                <option value="Clothes">Clothes</option>
+                <option value="Jewelry">Jewelry</option>
+                <option value="Home Accessories">Home Accessories</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="productDescription">Description</label>
+            <textarea id="productDescription" rows="3" placeholder="Describe the product..."></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="productImage">Product Image</label>
+            <div class="image-upload-wrap" id="imageUploadWrap">
+              <input type="file" id="productImage" accept="image/*" class="image-file-input" />
+              <div class="image-upload-label" id="imageUploadLabel">
+                <span class="upload-icon">&#128247;</span>
+                <span>Tap to upload image</span>
+              </div>
+              <img id="imagePreview" class="image-preview hidden" alt="Preview" />
+            </div>
+            <input type="hidden" id="productImageData" />
+          </div>
+
+          <div class="form-group">
+            <label class="toggle-label">
+              <input type="checkbox" id="productInStock" checked />
+              <span class="toggle-text">Available in stock</span>
+            </label>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" id="cancelModal" class="btn btn-outline">Cancel</button>
+            <button type="submit" id="saveProductBtn" class="btn btn-gold">Save Product</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div id="confirmModal" class="modal-overlay hidden">
+      <div class="modal modal-sm">
+        <h3>Delete Product?</h3>
+        <p>This action cannot be undone.</p>
+        <div class="form-actions">
+          <button id="cancelDelete" class="btn btn-outline">Cancel</button>
+          <button id="confirmDelete" class="btn btn-danger">Delete</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="toast" class="toast hidden"></div>
 
     <script src="admin.js"></script>
   </body>

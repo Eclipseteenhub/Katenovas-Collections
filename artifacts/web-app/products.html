@@ -3,27 +3,63 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Market - Products</title>
+    <title>Products — Katenovas Collections</title>
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
-    <header>
-      <nav>
-        <a href="index.html">Home</a>
-        <a href="products.html">Products</a>
-        <a href="cart.html">Cart</a>
-        <a href="contact.html">Contact</a>
-      </nav>
+
+    <header class="site-header">
+      <div class="header-inner">
+        <a href="index.html" class="brand-logo">
+          <span class="brand-name">Katenovas Collections</span>
+        </a>
+        <button class="nav-toggle" id="navToggle" aria-label="Open menu">&#9776;</button>
+        <nav class="site-nav" id="siteNav">
+          <button class="nav-close" id="navClose" aria-label="Close menu">&times;</button>
+          <a href="index.html" class="nav-link">Home</a>
+          <a href="products.html" class="nav-link active">Products</a>
+          <a href="cart.html" class="nav-link cart-link">
+            Cart <span class="cart-badge" id="cartBadge">0</span>
+          </a>
+          <a href="contact.html" class="nav-link">Contact</a>
+        </nav>
+      </div>
     </header>
 
-    <main>
-      <h1>Products</h1>
-      <div id="products-grid"></div>
+    <main class="page-main">
+      <div class="container">
+        <div class="products-toolbar">
+          <h1 class="page-title">Our Products</h1>
+          <div class="search-wrap">
+            <input type="search" id="searchInput" class="search-input" placeholder="Search products..." />
+          </div>
+          <div class="filter-wrap">
+            <button class="filter-btn active" data-category="All">All</button>
+            <button class="filter-btn" data-category="Clothes">Clothes</button>
+            <button class="filter-btn" data-category="Jewelry">Jewelry</button>
+            <button class="filter-btn" data-category="Home Accessories">Home</button>
+          </div>
+        </div>
+
+        <div id="productsGrid" class="products-grid"></div>
+        <p id="emptyMessage" class="empty-message hidden">No products found. Check back soon!</p>
+      </div>
     </main>
 
-    <footer>
-      <p>&copy; 2026 Market. All rights reserved.</p>
+    <footer class="site-footer">
+      <div class="container">
+        <p class="brand-name-footer">Katenovas Collections</p>
+        <nav class="footer-nav">
+          <a href="index.html">Home</a>
+          <a href="products.html">Products</a>
+          <a href="cart.html">Cart</a>
+          <a href="contact.html">Contact</a>
+        </nav>
+        <p class="footer-copy">&copy; 2026 Katenovas Collections. All rights reserved.</p>
+      </div>
     </footer>
+
+    <div id="toast" class="toast hidden"></div>
 
     <script src="app.js"></script>
   </body>

@@ -3,37 +3,81 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Market - Contact</title>
+    <title>Contact — Katenovas Collections</title>
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
-    <header>
-      <nav>
-        <a href="index.html">Home</a>
-        <a href="products.html">Products</a>
-        <a href="cart.html">Cart</a>
-        <a href="contact.html">Contact</a>
-      </nav>
+
+    <header class="site-header">
+      <div class="header-inner">
+        <a href="index.html" class="brand-logo">
+          <span class="brand-name">Katenovas Collections</span>
+        </a>
+        <button class="nav-toggle" id="navToggle" aria-label="Open menu">&#9776;</button>
+        <nav class="site-nav" id="siteNav">
+          <button class="nav-close" id="navClose" aria-label="Close menu">&times;</button>
+          <a href="index.html" class="nav-link">Home</a>
+          <a href="products.html" class="nav-link">Products</a>
+          <a href="cart.html" class="nav-link cart-link">
+            Cart <span class="cart-badge" id="cartBadge">0</span>
+          </a>
+          <a href="contact.html" class="nav-link active">Contact</a>
+        </nav>
+      </div>
     </header>
 
-    <main>
-      <h1>Contact Us</h1>
-      <form id="contact-form">
-        <label for="name">Name</label>
-        <input type="text" id="name" name="name" placeholder="Your name" required />
+    <main class="page-main">
+      <div class="container container-narrow">
+        <h1 class="page-title">Contact Us</h1>
 
-        <label for="email">Email</label>
-        <input type="email" id="email" name="email" placeholder="Your email" required />
+        <div class="contact-card">
+          <div class="contact-icon">&#128222;</div>
+          <h2>Chat with us on WhatsApp</h2>
+          <p>The fastest way to reach us, place an order, or ask any question.</p>
+          <a href="https://wa.me/2348025497647" target="_blank" class="btn btn-whatsapp">
+            <span>&#128222;</span> Open WhatsApp
+          </a>
+        </div>
 
-        <label for="message">Message</label>
-        <textarea id="message" name="message" placeholder="Your message" required></textarea>
-
-        <button type="submit">Send Message</button>
-      </form>
+        <div class="contact-info-grid">
+          <div class="contact-info-card">
+            <h3>&#128665; Delivery</h3>
+            <p>We deliver across Nigeria. Delivery time and fees depend on your location. Contact us on WhatsApp for a delivery quote.</p>
+          </div>
+          <div class="contact-info-card">
+            <h3>&#128336; Business Hours</h3>
+            <p>Monday – Saturday<br>9:00 AM – 7:00 PM</p>
+            <p>Sunday: Limited availability</p>
+          </div>
+          <div class="contact-info-card">
+            <h3>&#128204; How to Order</h3>
+            <ol>
+              <li>Browse our products</li>
+              <li>Add items to your cart</li>
+              <li>Tap "Order via WhatsApp"</li>
+              <li>We confirm and deliver!</li>
+            </ol>
+          </div>
+          <div class="contact-info-card">
+            <h3>&#10067; FAQs</h3>
+            <p><strong>Can I return an item?</strong><br>Yes, within 48 hours of delivery.</p>
+            <p><strong>Do you do custom orders?</strong><br>Contact us to discuss.</p>
+          </div>
+        </div>
+      </div>
     </main>
 
-    <footer>
-      <p>&copy; 2026 Market. All rights reserved.</p>
+    <footer class="site-footer">
+      <div class="container">
+        <p class="brand-name-footer">Katenovas Collections</p>
+        <nav class="footer-nav">
+          <a href="index.html">Home</a>
+          <a href="products.html">Products</a>
+          <a href="cart.html">Cart</a>
+          <a href="contact.html">Contact</a>
+        </nav>
+        <p class="footer-copy">&copy; 2026 Katenovas Collections. All rights reserved.</p>
+      </div>
     </footer>
 
     <script src="app.js"></script>

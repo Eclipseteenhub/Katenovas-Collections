@@ -3,21 +3,47 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Market - Admin Login</title>
+    <title>Admin Login — Katenovas Collections</title>
     <link rel="stylesheet" href="style.css" />
   </head>
-  <body>
-    <main>
-      <h1>Admin Login</h1>
-      <form id="admin-login-form">
-        <label for="username">Username</label>
-        <input type="text" id="username" name="username" placeholder="Username" required />
+  <body class="admin-body">
 
-        <label for="password">Password</label>
-        <input type="password" id="password" name="password" placeholder="Password" required />
+    <main class="login-page">
+      <div class="login-card">
+        <div class="login-brand">
+          <p class="login-brand-name">Katenovas Collections</p>
+          <p class="login-sub">Admin Portal</p>
+        </div>
 
-        <button type="submit">Login</button>
-      </form>
+        <form id="adminLoginForm" class="login-form" novalidate>
+          <div class="form-group">
+            <label for="username">Username</label>
+            <input
+              type="text"
+              id="username"
+              name="username"
+              placeholder="Enter username"
+              autocomplete="username"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label for="password">Password</label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              placeholder="Enter password"
+              autocomplete="current-password"
+              required
+            />
+          </div>
+          <p id="loginError" class="login-error hidden">Incorrect username or password.</p>
+          <button type="submit" class="btn btn-gold btn-full">Login</button>
+        </form>
+
+        <a href="index.html" class="back-link">&#8592; Back to store</a>
+      </div>
     </main>
 
     <script src="admin.js"></script>
