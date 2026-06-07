@@ -197,6 +197,21 @@ ul { list-style: none; }
   letter-spacing: 0.02em;
 }
 
+.brand-logo-img {
+  height: 52px;
+  width: auto;
+  display: block;
+  border-radius: 6px;
+}
+
+.login-logo-img {
+  height: 100px;
+  width: auto;
+  display: block;
+  margin: 0 auto 0.25rem;
+  border-radius: 10px;
+}
+
 /* Nav */
 .nav-toggle {
   display: flex;
@@ -353,6 +368,10 @@ ul { list-style: none; }
 
 @media (min-width: 480px) {
   .category-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (min-width: 800px) {
+  .category-grid { grid-template-columns: repeat(5, 1fr); }
 }
 
 .category-card {
@@ -865,6 +884,15 @@ ul { list-style: none; }
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
+}
+
+.map-link {
+  display: inline-block;
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--burgundy);
+  font-weight: 600;
+  text-decoration: underline;
 }
 
 /* ─── Admin body ──────────────────────── */
