@@ -2,12 +2,42 @@
 
 /* ═══════════════════════════════════════
    KATENOVAS COLLECTIONS — admin.js
-   Admin portal
+   Admin portal — talks to the API
    ═══════════════════════════════════════ */
 
-const ADMIN_CREDS  = { username: '@Eragbai50', password: '408258' };
-const SESSION_KEY  = 'kc_admin_session';
-const PRODUCTS_KEY = 'kc_products';
+const ADMIN_CREDS = { username: '@Eragbai50', password: '408258' };
+const SESSION_KEY = 'kc_admin_session';
+const API_BASE    = '/api';
+
+/* ─── API helpers ─────────────────────── */
+
+async function apiFetch(path, options) {
+  const res = await fetch(API_BASE + path, {
+    headers: { 'Content-Type': 'application/json' },
+    ...options
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error || 'Request failed');
+  }
+  return res.json();
+}
+
+async function fetchProducts() {
+  return apiFetch('/products');
+}
+
+async function createProduct(data) {
+  return apiFetch('/products', { method: 'POST', body: JSON.stringify(data) });
+}
+
+async function updateProduct(id, data) {
+  return apiFetch('/products/' + id, { method: 'PUT', body: JSON.stringify(data) });
+}
+
+async function deleteProductById(id) {
+  return apiFetch('/products/' + id, { method: 'DELETE' });
+}
 
 /* ─── Auth helpers ────────────────────── */
 
@@ -16,9 +46,7 @@ function isLoggedIn() {
 }
 
 function checkAuth() {
-  if (!isLoggedIn()) {
-    window.location.href = 'admin-login.html';
-  }
+  if (!isLoggedIn()) window.location.href = 'admin-login.html';
 }
 
 function logout() {
@@ -26,32 +54,12 @@ function logout() {
   window.location.href = 'admin-login.html';
 }
 
-/* ─── Storage helpers ─────────────────── */
-
-function getProducts() {
-  try {
-    return JSON.parse(localStorage.getItem(PRODUCTS_KEY)) || [];
-  } catch {
-    return [];
-  }
-}
-
-function saveProducts(products) {
-  localStorage.setItem(PRODUCTS_KEY, JSON.stringify(products));
-}
-
-function generateId() {
-  return 'p_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
-}
-
 /* ─── Escape HTML ─────────────────────── */
 
 function escHtml(str) {
   return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 /* ─── Toast ───────────────────────────── */
@@ -67,30 +75,33 @@ function showToast(msg, type) {
 
 /* ─── Stats ───────────────────────────── */
 
-function updateStats() {
-  const products = getProducts();
-  const inStock  = products.filter(p => p.inStock).length;
-  const totalEl  = document.getElementById('totalProducts');
-  const inEl     = document.getElementById('inStockCount');
-  const outEl    = document.getElementById('outStockCount');
-  if (totalEl) totalEl.textContent = products.length;
-  if (inEl)    inEl.textContent    = inStock;
-  if (outEl)   outEl.textContent   = products.length - inStock;
+function updateStats(products) {
+  const inStock = products.filter(p => p.inStock).length;
+  const el = id => document.getElementById(id);
+  if (el('totalProducts')) el('totalProducts').textContent = products.length;
+  if (el('inStockCount'))  el('inStockCount').textContent  = inStock;
+  if (el('outStockCount')) el('outStockCount').textContent = products.length - inStock;
 }
 
 /* ─── Render: Admin product list ──────── */
 
-function renderAdminProducts() {
+async function renderAdminProducts() {
   const list  = document.getElementById('adminProductsList');
   const empty = document.getElementById('noProducts');
   if (!list) return;
 
-  const products = getProducts();
+  let products;
+  try {
+    products = await fetchProducts();
+  } catch {
+    showToast('Could not load products. Check your connection.', 'error');
+    return;
+  }
 
   if (products.length === 0) {
     list.innerHTML = '';
     if (empty) empty.classList.remove('hidden');
-    updateStats();
+    updateStats(products);
     return;
   }
 
@@ -116,22 +127,30 @@ function renderAdminProducts() {
         ${p.description ? `<p class="admin-product-desc">${escHtml(p.description)}</p>` : ''}
       </div>
       <div class="admin-product-actions">
-        <button class="btn btn-sm btn-outline" onclick="openEditModal('${escHtml(p.id)}')">Edit</button>
-        <button class="btn btn-sm btn-danger" onclick="confirmDelete('${escHtml(p.id)}')">Delete</button>
+        <button class="btn btn-sm btn-outline" data-edit="${escHtml(p.id)}">Edit</button>
+        <button class="btn btn-sm btn-danger"  data-delete="${escHtml(p.id)}">Delete</button>
       </div>
     </div>
   `).join('');
 
-  updateStats();
+  // Attach edit / delete listeners
+  list.querySelectorAll('[data-edit]').forEach(btn => {
+    btn.addEventListener('click', () => openEditModal(btn.dataset.edit, products));
+  });
+  list.querySelectorAll('[data-delete]').forEach(btn => {
+    btn.addEventListener('click', () => confirmDelete(btn.dataset.delete));
+  });
+
+  updateStats(products);
 }
 
-/* ─── Modal: open / close ─────────────── */
+/* ─── Modal ───────────────────────────── */
 
 let editingId = null;
 
 function clearForm() {
   document.getElementById('productForm').reset();
-  document.getElementById('productId').value       = '';
+  document.getElementById('productId').value        = '';
   document.getElementById('productImageData').value = '';
   const preview = document.getElementById('imagePreview');
   const label   = document.getElementById('imageUploadLabel');
@@ -149,23 +168,22 @@ function openAddModal() {
   document.body.classList.add('modal-open');
 }
 
-function openEditModal(id) {
-  const product = getProducts().find(p => p.id === id);
+function openEditModal(id, products) {
+  const product = products.find(p => p.id === id);
   if (!product) return;
   editingId = id;
 
-  document.getElementById('modalTitle').textContent      = 'Edit Product';
-  document.getElementById('productId').value             = id;
-  document.getElementById('productName').value           = product.name;
-  document.getElementById('productPrice').value          = product.price;
-  document.getElementById('productCategory').value       = product.category;
-  document.getElementById('productDescription').value    = product.description || '';
-  document.getElementById('productInStock').checked      = product.inStock;
-  document.getElementById('productImageData').value      = product.image || '';
+  document.getElementById('modalTitle').textContent   = 'Edit Product';
+  document.getElementById('productId').value          = id;
+  document.getElementById('productName').value        = product.name;
+  document.getElementById('productPrice').value       = product.price;
+  document.getElementById('productCategory').value    = product.category;
+  document.getElementById('productDescription').value = product.description || '';
+  document.getElementById('productInStock').checked   = product.inStock;
+  document.getElementById('productImageData').value   = product.image || '';
 
   const preview = document.getElementById('imagePreview');
   const label   = document.getElementById('imageUploadLabel');
-
   if (product.image) {
     preview.src = product.image;
     preview.classList.remove('hidden');
@@ -187,7 +205,7 @@ function closeProductModal() {
 
 /* ─── Save product ────────────────────── */
 
-function saveProduct(e) {
+async function saveProduct(e) {
   e.preventDefault();
 
   const name        = document.getElementById('productName').value.trim();
@@ -202,26 +220,26 @@ function saveProduct(e) {
     return;
   }
 
-  const products = getProducts();
+  const saveBtn = document.getElementById('saveProductBtn');
+  saveBtn.disabled    = true;
+  saveBtn.textContent = 'Saving…';
 
-  if (editingId) {
-    const idx = products.findIndex(p => p.id === editingId);
-    if (idx !== -1) {
-      products[idx] = { ...products[idx], name, price, category, description, image, inStock };
+  try {
+    if (editingId) {
+      await updateProduct(editingId, { name, price, category, description, image, inStock });
+      showToast('Product updated!');
+    } else {
+      await createProduct({ name, price, category, description, image, inStock });
+      showToast('Product added!');
     }
-    showToast('Product updated!');
-  } else {
-    products.unshift({
-      id: generateId(),
-      name, price, category, description, image, inStock,
-      createdAt: Date.now()
-    });
-    showToast('Product added!');
+    closeProductModal();
+    await renderAdminProducts();
+  } catch (err) {
+    showToast(err.message || 'Failed to save product.', 'error');
+  } finally {
+    saveBtn.disabled    = false;
+    saveBtn.textContent = 'Save Product';
   }
-
-  saveProducts(products);
-  renderAdminProducts();
-  closeProductModal();
 }
 
 /* ─── Delete product ──────────────────── */
@@ -233,26 +251,29 @@ function confirmDelete(id) {
   document.getElementById('confirmModal').classList.remove('hidden');
 }
 
-function executeDelete() {
+async function executeDelete() {
   if (!pendingDeleteId) return;
-  const products = getProducts().filter(p => p.id !== pendingDeleteId);
-  saveProducts(products);
+  const id = pendingDeleteId;
   pendingDeleteId = null;
   document.getElementById('confirmModal').classList.add('hidden');
-  renderAdminProducts();
-  showToast('Product deleted.');
+
+  try {
+    await deleteProductById(id);
+    showToast('Product deleted.');
+    await renderAdminProducts();
+  } catch (err) {
+    showToast(err.message || 'Failed to delete product.', 'error');
+  }
 }
 
 /* ─── Image upload ────────────────────── */
 
 function handleImageUpload(file) {
   if (!file) return;
-
   if (file.size > 2 * 1024 * 1024) {
     showToast('Image must be under 2 MB.', 'error');
     return;
   }
-
   const reader = new FileReader();
   reader.onload = ev => {
     const dataUrl = ev.target.result;
@@ -300,48 +321,29 @@ function initDashboardPage() {
   checkAuth();
   renderAdminProducts();
 
-  /* Buttons */
-  document.getElementById('addProductBtn')
-    .addEventListener('click', openAddModal);
+  document.getElementById('addProductBtn').addEventListener('click', openAddModal);
+  document.getElementById('logoutBtn').addEventListener('click', logout);
+  document.getElementById('closeModal').addEventListener('click', closeProductModal);
+  document.getElementById('cancelModal').addEventListener('click', closeProductModal);
+  document.getElementById('productForm').addEventListener('submit', saveProduct);
 
-  document.getElementById('logoutBtn')
-    .addEventListener('click', logout);
-
-  document.getElementById('closeModal')
-    .addEventListener('click', closeProductModal);
-
-  document.getElementById('cancelModal')
-    .addEventListener('click', closeProductModal);
-
-  document.getElementById('productForm')
-    .addEventListener('submit', saveProduct);
-
-  /* Delete confirm modal */
   document.getElementById('cancelDelete').addEventListener('click', () => {
     pendingDeleteId = null;
     document.getElementById('confirmModal').classList.add('hidden');
   });
+  document.getElementById('confirmDelete').addEventListener('click', executeDelete);
 
-  document.getElementById('confirmDelete')
-    .addEventListener('click', executeDelete);
-
-  /* Close product modal by clicking overlay */
   document.getElementById('productModal').addEventListener('click', e => {
-    if (e.target === document.getElementById('productModal')) {
-      closeProductModal();
-    }
+    if (e.target === document.getElementById('productModal')) closeProductModal();
   });
 
-  /* Image upload */
   const imageInput = document.getElementById('productImage');
   if (imageInput) {
     imageInput.addEventListener('change', e => handleImageUpload(e.target.files[0]));
   }
-
   document.getElementById('imagePreview').addEventListener('click', () => {
     document.getElementById('productImage').click();
   });
-
   document.getElementById('imageUploadLabel').addEventListener('click', () => {
     document.getElementById('productImage').click();
   });
@@ -351,10 +353,6 @@ function initDashboardPage() {
 
 document.addEventListener('DOMContentLoaded', () => {
   const path = window.location.pathname;
-
-  if (path.includes('admin-login')) {
-    initLoginPage();
-  } else if (path.includes('admin-dashboard')) {
-    initDashboardPage();
-  }
+  if (path.includes('admin-login'))     { initLoginPage(); }
+  else if (path.includes('admin-dashboard')) { initDashboardPage(); }
 });
