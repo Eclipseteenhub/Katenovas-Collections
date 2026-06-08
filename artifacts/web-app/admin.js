@@ -23,27 +23,14 @@ async function apiFetch(path, options) {
   return res.json();
 }
 
-async function fetchProducts() {
-  return apiFetch('/products');
-}
-
-async function createProduct(data) {
-  return apiFetch('/products', { method: 'POST', body: JSON.stringify(data) });
-}
-
-async function updateProduct(id, data) {
-  return apiFetch('/products/' + id, { method: 'PUT', body: JSON.stringify(data) });
-}
-
-async function deleteProductById(id) {
-  return apiFetch('/products/' + id, { method: 'DELETE' });
-}
+async function fetchProducts() { return apiFetch('/products'); }
+async function createProduct(data) { return apiFetch('/products', { method: 'POST', body: JSON.stringify(data) }); }
+async function updateProduct(id, data) { return apiFetch('/products/' + id, { method: 'PUT', body: JSON.stringify(data) }); }
+async function deleteProductById(id) { return apiFetch('/products/' + id, { method: 'DELETE' }); }
 
 /* ─── Auth helpers ────────────────────── */
 
-function isLoggedIn() {
-  return sessionStorage.getItem(SESSION_KEY) === 'true';
-}
+function isLoggedIn() { return sessionStorage.getItem(SESSION_KEY) === 'true'; }
 
 function checkAuth() {
   if (!isLoggedIn()) window.location.href = 'admin-login.html';
@@ -54,7 +41,7 @@ function logout() {
   window.location.href = 'admin-login.html';
 }
 
-/* ─── Escape HTML ─────────────────────── */
+/* ─── Helpers ─────────────────────────── */
 
 function escHtml(str) {
   return String(str)
@@ -68,9 +55,10 @@ function showToast(msg, type) {
   const toast = document.getElementById('toast');
   if (!toast) return;
   toast.textContent = msg;
-  toast.className   = 'toast' + (type ? ' toast-' + type : '');
+  toast.className = 'toast' + (type ? ' toast-' + type : '');
+  toast.classList.remove('hidden');
   clearTimeout(toast._timer);
-  toast._timer = setTimeout(() => toast.classList.add('hidden'), 3000);
+  toast._timer = setTimeout(() => toast.classList.add('hidden'), 3500);
 }
 
 /* ─── Stats ───────────────────────────── */
@@ -133,7 +121,6 @@ async function renderAdminProducts() {
     </div>
   `).join('');
 
-  // Attach edit / delete listeners
   list.querySelectorAll('[data-edit]').forEach(btn => {
     btn.addEventListener('click', () => openEditModal(btn.dataset.edit, products));
   });
@@ -142,6 +129,33 @@ async function renderAdminProducts() {
   });
 
   updateStats(products);
+}
+
+/* ─── Field validation helpers ────────── */
+
+function setFieldError(id, msg) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.add('input-error');
+  let hint = el.parentElement.querySelector('.field-hint');
+  if (!hint) {
+    hint = document.createElement('p');
+    hint.className = 'field-hint error-hint';
+    el.parentElement.appendChild(hint);
+  }
+  hint.textContent = msg;
+}
+
+function clearFieldError(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.remove('input-error');
+  const hint = el.parentElement.querySelector('.field-hint');
+  if (hint) hint.remove();
+}
+
+function clearAllFieldErrors() {
+  ['productName', 'productPrice', 'productCategory'].forEach(clearFieldError);
 }
 
 /* ─── Modal ───────────────────────────── */
@@ -154,10 +168,10 @@ function clearForm() {
   document.getElementById('productImageData').value = '';
   const preview = document.getElementById('imagePreview');
   const label   = document.getElementById('imageUploadLabel');
-  preview.src   = '';
-  preview.classList.add('hidden');
-  label.classList.remove('hidden');
+  if (preview) { preview.src = ''; preview.classList.add('hidden'); }
+  if (label)   label.classList.remove('hidden');
   document.getElementById('productInStock').checked = true;
+  clearAllFieldErrors();
 }
 
 function openAddModal() {
@@ -166,6 +180,7 @@ function openAddModal() {
   clearForm();
   document.getElementById('productModal').classList.remove('hidden');
   document.body.classList.add('modal-open');
+  setTimeout(() => document.getElementById('productName').focus(), 100);
 }
 
 function openEditModal(id, products) {
@@ -181,16 +196,17 @@ function openEditModal(id, products) {
   document.getElementById('productDescription').value = product.description || '';
   document.getElementById('productInStock').checked   = product.inStock;
   document.getElementById('productImageData').value   = product.image || '';
+  clearAllFieldErrors();
 
   const preview = document.getElementById('imagePreview');
   const label   = document.getElementById('imageUploadLabel');
   if (product.image) {
     preview.src = product.image;
     preview.classList.remove('hidden');
-    label.classList.add('hidden');
+    if (label) label.classList.add('hidden');
   } else {
     preview.classList.add('hidden');
-    label.classList.remove('hidden');
+    if (label) label.classList.remove('hidden');
   }
 
   document.getElementById('productModal').classList.remove('hidden');
@@ -200,6 +216,7 @@ function openEditModal(id, products) {
 function closeProductModal() {
   document.getElementById('productModal').classList.add('hidden');
   document.body.classList.remove('modal-open');
+  clearAllFieldErrors();
   editingId = null;
 }
 
@@ -207,35 +224,55 @@ function closeProductModal() {
 
 async function saveProduct(e) {
   e.preventDefault();
+  clearAllFieldErrors();
 
   const name        = document.getElementById('productName').value.trim();
-  const price       = parseFloat(document.getElementById('productPrice').value);
+  const priceRaw    = document.getElementById('productPrice').value.trim();
+  const price       = parseFloat(priceRaw);
   const category    = document.getElementById('productCategory').value;
   const description = document.getElementById('productDescription').value.trim();
   const image       = document.getElementById('productImageData').value;
   const inStock     = document.getElementById('productInStock').checked;
 
-  if (!name || isNaN(price) || price < 0 || !category) {
-    showToast('Please fill in all required fields.', 'error');
+  // Validate each field individually
+  let hasError = false;
+
+  if (!name) {
+    setFieldError('productName', 'Product name is required.');
+    hasError = true;
+  }
+
+  if (!priceRaw || isNaN(price) || price < 0) {
+    setFieldError('productPrice', 'Enter a valid price (e.g. 5000).');
+    hasError = true;
+  }
+
+  if (!category) {
+    setFieldError('productCategory', 'Please select a category.');
+    hasError = true;
+  }
+
+  if (hasError) {
+    showToast('Please fix the highlighted fields.', 'error');
     return;
   }
 
   const saveBtn = document.getElementById('saveProductBtn');
   saveBtn.disabled    = true;
-  saveBtn.textContent = 'Saving…';
+  saveBtn.textContent = 'Saving\u2026';
 
   try {
     if (editingId) {
       await updateProduct(editingId, { name, price, category, description, image, inStock });
-      showToast('Product updated!');
+      showToast('Product updated successfully!');
     } else {
       await createProduct({ name, price, category, description, image, inStock });
-      showToast('Product added!');
+      showToast('Product added successfully!');
     }
     closeProductModal();
     await renderAdminProducts();
   } catch (err) {
-    showToast(err.message || 'Failed to save product.', 'error');
+    showToast(err.message || 'Failed to save product. Try again.', 'error');
   } finally {
     saveBtn.disabled    = false;
     saveBtn.textContent = 'Save Product';
@@ -270,8 +307,8 @@ async function executeDelete() {
 
 function handleImageUpload(file) {
   if (!file) return;
-  if (file.size > 2 * 1024 * 1024) {
-    showToast('Image must be under 2 MB.', 'error');
+  if (file.size > 3 * 1024 * 1024) {
+    showToast('Image must be under 3 MB.', 'error');
     return;
   }
   const reader = new FileReader();
@@ -282,7 +319,7 @@ function handleImageUpload(file) {
     const label   = document.getElementById('imageUploadLabel');
     preview.src   = dataUrl;
     preview.classList.remove('hidden');
-    label.classList.add('hidden');
+    if (label) label.classList.add('hidden');
   };
   reader.readAsDataURL(file);
 }
@@ -308,10 +345,19 @@ function initLoginPage() {
       sessionStorage.setItem(SESSION_KEY, 'true');
       window.location.href = 'admin-dashboard.html';
     } else {
-      errorEl.classList.remove('hidden');
+      if (errorEl) errorEl.classList.remove('hidden');
       document.getElementById('password').value = '';
       document.getElementById('password').focus();
     }
+  });
+
+  // Hide error when user starts typing again
+  ['username', 'password'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', () => {
+      const errorEl = document.getElementById('loginError');
+      if (errorEl) errorEl.classList.add('hidden');
+    });
   });
 }
 
@@ -341,11 +387,16 @@ function initDashboardPage() {
   if (imageInput) {
     imageInput.addEventListener('change', e => handleImageUpload(e.target.files[0]));
   }
-  document.getElementById('imagePreview').addEventListener('click', () => {
-    document.getElementById('productImage').click();
-  });
-  document.getElementById('imageUploadLabel').addEventListener('click', () => {
-    document.getElementById('productImage').click();
+  const preview = document.getElementById('imagePreview');
+  const label   = document.getElementById('imageUploadLabel');
+  if (preview) preview.addEventListener('click', () => imageInput && imageInput.click());
+  if (label)   label.addEventListener('click',   () => imageInput && imageInput.click());
+
+  // Clear field errors when user corrects inputs
+  ['productName', 'productPrice', 'productCategory'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', () => clearFieldError(id));
+    if (el) el.addEventListener('change', () => clearFieldError(id));
   });
 }
 
@@ -353,6 +404,6 @@ function initDashboardPage() {
 
 document.addEventListener('DOMContentLoaded', () => {
   const path = window.location.pathname;
-  if (path.includes('admin-login'))     { initLoginPage(); }
+  if (path.includes('admin-login'))      { initLoginPage(); }
   else if (path.includes('admin-dashboard')) { initDashboardPage(); }
 });

@@ -150,11 +150,11 @@ function renderProducts(products, category, query) {
 
   if (list.length === 0) {
     grid.innerHTML = '';
-    empty.classList.remove('hidden');
+    if (empty) empty.classList.remove('hidden');
     return;
   }
 
-  empty.classList.add('hidden');
+  if (empty) empty.classList.add('hidden');
   grid.innerHTML = list.map(p => `
     <div class="product-card">
       <div class="product-img-wrap">
@@ -173,14 +173,19 @@ function renderProducts(products, category, query) {
         <div class="product-footer">
           <span class="product-price">${formatPrice(p.price)}</span>
           <button
-            class="btn btn-sm btn-gold"
-            onclick="addToCart('${escHtml(p.id)}')"
+            class="btn btn-sm btn-gold add-to-cart-btn"
+            data-id="${escHtml(p.id)}"
             ${p.inStock ? '' : 'disabled'}
           >${p.inStock ? 'Add to Cart' : 'Unavailable'}</button>
         </div>
       </div>
     </div>
   `).join('');
+
+  // Attach add-to-cart via event delegation (works in module scope)
+  grid.querySelectorAll('.add-to-cart-btn').forEach(btn => {
+    btn.addEventListener('click', () => addToCart(btn.dataset.id));
+  });
 }
 
 /* ─── Render: Cart page ───────────────── */
@@ -198,14 +203,14 @@ async function renderCart() {
 
   if (cart.length === 0) {
     cartItemsEl.innerHTML = '';
-    cartSummary.classList.add('hidden');
-    emptyCart.classList.remove('hidden');
+    if (cartSummary) cartSummary.classList.add('hidden');
+    if (emptyCart)   emptyCart.classList.remove('hidden');
     updateCartBadge();
     return;
   }
 
-  emptyCart.classList.add('hidden');
-  cartSummary.classList.remove('hidden');
+  if (emptyCart)   emptyCart.classList.add('hidden');
+  if (cartSummary) cartSummary.classList.remove('hidden');
 
   cartItemsEl.innerHTML = cart.map(item => {
     const p = products.find(pr => pr.id === item.id);
@@ -226,20 +231,28 @@ async function renderCart() {
         </div>
         <div class="cart-item-controls">
           <div class="qty-controls">
-            <button class="qty-btn" onclick="updateCartQty('${escHtml(p.id)}', -1)">\u2212</button>
+            <button class="qty-btn" data-id="${escHtml(p.id)}" data-delta="-1">\u2212</button>
             <span class="qty-value">${item.qty}</span>
-            <button class="qty-btn" onclick="updateCartQty('${escHtml(p.id)}', 1)">+</button>
+            <button class="qty-btn" data-id="${escHtml(p.id)}" data-delta="1">+</button>
           </div>
           <p class="cart-item-total">${formatPrice(lineTotal)}</p>
-          <button class="remove-btn" onclick="removeFromCart('${escHtml(p.id)}')">Remove</button>
+          <button class="remove-btn" data-id="${escHtml(p.id)}">Remove</button>
         </div>
       </div>
     `;
   }).join('');
 
+  // Attach cart controls via event delegation
+  cartItemsEl.querySelectorAll('.qty-btn').forEach(btn => {
+    btn.addEventListener('click', () => updateCartQty(btn.dataset.id, parseInt(btn.dataset.delta)));
+  });
+  cartItemsEl.querySelectorAll('.remove-btn').forEach(btn => {
+    btn.addEventListener('click', () => removeFromCart(btn.dataset.id));
+  });
+
   const total = getCartTotal(products);
-  subtotalEl.textContent = formatPrice(total);
-  totalEl.textContent    = formatPrice(total);
+  if (subtotalEl) subtotalEl.textContent = formatPrice(total);
+  if (totalEl)    totalEl.textContent    = formatPrice(total);
   updateCartBadge();
 }
 
@@ -316,7 +329,7 @@ async function initCartPage() {
   await renderCart();
   const waBtn = document.getElementById('whatsappBtn');
   if (waBtn) {
-    waBtn.replaceWith(waBtn.cloneNode(true)); // remove old listeners
+    waBtn.replaceWith(waBtn.cloneNode(true));
     document.getElementById('whatsappBtn')
       .addEventListener('click', sendWhatsAppOrder);
   }

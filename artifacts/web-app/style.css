@@ -990,6 +990,20 @@ ul { list-style: none; }
 
 .form-group textarea { resize: vertical; }
 
+.form-group input.input-error,
+.form-group select.input-error,
+.form-group textarea.input-error {
+  border-color: #c0392b;
+  background: #fff8f8;
+}
+
+.error-hint {
+  font-size: 0.78rem;
+  color: #c0392b;
+  margin: 0.1rem 0 0;
+  font-weight: 500;
+}
+
 .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
