@@ -3,6 +3,7 @@ import { db, productsTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { desc } from "drizzle-orm";
+import { requireAdmin } from "../middleware/requireAdmin";
 
 const router = Router();
 
@@ -45,7 +46,7 @@ router.get("/products", async (req, res) => {
 });
 
 // POST /api/products
-router.post("/products", async (req, res) => {
+router.post("/products", requireAdmin, async (req, res) => {
   const parsed = productBodySchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Invalid product data" });
@@ -68,7 +69,7 @@ router.post("/products", async (req, res) => {
 });
 
 // PUT /api/products/:id
-router.put("/products/:id", async (req, res) => {
+router.put("/products/:id", requireAdmin, async (req, res) => {
   const parsed = productBodySchema.partial().safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Invalid product data" });
@@ -88,7 +89,7 @@ router.put("/products/:id", async (req, res) => {
     const [row] = await db
       .update(productsTable)
       .set(updates)
-      .where(eq(productsTable.id, req.params.id))
+      .where(eq(productsTable.id, String(req.params.id)))
       .returning();
 
     if (!row) {
@@ -103,11 +104,11 @@ router.put("/products/:id", async (req, res) => {
 });
 
 // DELETE /api/products/:id
-router.delete("/products/:id", async (req, res) => {
+router.delete("/products/:id", requireAdmin, async (req, res) => {
   try {
     const [row] = await db
       .delete(productsTable)
-      .where(eq(productsTable.id, req.params.id))
+      .where(eq(productsTable.id, String(req.params.id)))
       .returning();
 
     if (!row) {

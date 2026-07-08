@@ -1,0 +1,111 @@
+Subject: Update Katenova Collections Website for Paystack Business Verification
+
+Hi,
+
+My Paystack business verification was rejected because the website does not meet their requirements. I need the website updated so it appears as a complete and professional e-commerce store suitable for business verification.
+
+Required Updates
+
+1. Functional Product Catalog
+
+* Ensure the Products page is fully functional.
+* Display real products with:
+    * Product name
+    * Price
+    * Product images
+    * Category
+    * Description
+    * Stock availability
+* Products should be searchable and filterable.
+
+2. Shopping Cart & Checkout
+
+* Ensure customers can:
+    * Add products to cart.
+    * Update quantities.
+    * Remove products.
+    * Proceed to checkout.
+* The checkout should be ready for Paystack payment integration (instead of only WhatsApp checkout).
+
+3. Required Website Pages
+
+Create separate pages linked in the website footer:
+
+* About Us
+* Contact Us
+* Privacy Policy
+* Terms & Conditions
+* Refund & Return Policy
+* Shipping & Delivery Policy
+
+These pages must be fully accessible and not empty.
+
+4. Contact Information
+
+Display consistently throughout the website:
+
+* Business Name: Katenova Collections
+* Business Address (must match business registration)
+* Phone Number
+* Email Address
+* WhatsApp Number
+
+5. Footer
+
+Include links to:
+
+* About Us
+* Contact
+* Privacy Policy
+* Terms & Conditions
+* Refund Policy
+* Shipping Policy
+* Social media links (if available)
+
+6. Payment Integration
+
+Replace the WhatsApp-only checkout with Paystack payment integration so customers can securely pay online using:
+
+* Cards (Visa, Mastercard, Verve)
+* Bank Transfer
+* USSD
+* Other Paystack-supported payment methods
+
+After successful payment:
+
+* Display a payment success page.
+* Save the order details in the database.
+* Update the admin dashboard with the new order.
+
+7. Order Management
+
+Create an Orders section in the admin dashboard where I can:
+
+* View all orders.
+* See payment status.
+* Update order status (Pending, Processing, Shipped, Delivered, Cancelled).
+* Search orders.
+
+8. Admin Dashboard
+
+Ensure I can:
+
+* Add, edit, and delete products.
+* Upload product images.
+* Manage stock availability.
+* View sales statistics.
+* View customer orders.
+
+9. Security
+
+* Protect the admin dashboard with server-side authentication (not browser-only password validation).
+* Secure API endpoints.
+* Validate all form submissions.
+
+10. Mobile Optimization
+
+Ensure the entire website works properly on mobile devices and loads quickly.
+
+Goal
+
+The website should function like a complete online store and meet the requirements for Paystack business verification, including product listings, online payment, legal policy pages, and a professional customer experience.
