@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Contact — Katenovas Collections</title>
+    <title>Checkout — Katenovas Collections</title>
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
@@ -22,57 +22,54 @@
             Cart <span class="cart-badge" id="cartBadge">0</span>
           </a>
           <a href="about.html" class="nav-link">About</a>
-          <a href="contact.html" class="nav-link active">Contact</a>
+          <a href="contact.html" class="nav-link">Contact</a>
         </nav>
       </div>
     </header>
 
     <main class="page-main">
-      <div class="container container-narrow">
-        <h1 class="page-title">Contact Us</h1>
+      <div class="container">
+        <h1 class="page-title">Checkout</h1>
 
-        <div class="contact-card">
-          <div class="contact-icon">&#128222;</div>
-          <h2>Chat with us on WhatsApp</h2>
-          <p>The fastest way to reach us, place an order, or ask any question.</p>
-          <a href="https://wa.me/2348025497647" target="_blank" class="btn btn-whatsapp">
-            <span>&#128222;</span> Open WhatsApp
-          </a>
+        <div id="checkoutEmpty" class="empty-cart hidden">
+          <p class="empty-icon">🛒</p>
+          <h2>Your cart is empty</h2>
+          <p>Add some products before checking out.</p>
+          <a href="products.html" class="btn btn-gold">Shop Now</a>
         </div>
 
-        <div class="contact-info-grid">
-          <div class="contact-info-card">
-            <h3>&#128205; Our Location</h3>
-            <p>131, Upper Mission Extension,<br>Aduwawa, Benin City,<br>Edo State, Nigeria.</p>
-            <a href="https://maps.google.com/?q=Upper+Mission+Extension+Aduwawa+Benin+City" target="_blank" class="map-link">View on map &rarr;</a>
+        <div id="checkoutLayout" class="checkout-layout">
+          <div class="checkout-form-card">
+            <h2>Delivery Details</h2>
+            <form id="checkoutForm" novalidate>
+              <div class="form-group">
+                <label for="customerName">Full Name <span class="required">*</span></label>
+                <input type="text" id="customerName" placeholder="e.g. Amaka Johnson" required />
+              </div>
+              <div class="form-group">
+                <label for="customerPhone">Phone Number <span class="required">*</span></label>
+                <input type="tel" id="customerPhone" placeholder="e.g. 08012345678" required />
+              </div>
+              <div class="form-group">
+                <label for="customerEmail">Email Address <span class="required">*</span></label>
+                <input type="email" id="customerEmail" placeholder="e.g. you@example.com" required />
+              </div>
+              <div class="form-group">
+                <label for="customerAddress">Delivery Address <span class="required">*</span></label>
+                <textarea id="customerAddress" rows="3" placeholder="Street, city, state" required></textarea>
+              </div>
+              <button type="submit" id="payBtn" class="btn btn-gold btn-full">Pay with Paystack</button>
+              <p class="checkout-note">You'll be redirected to Paystack's secure page to complete your payment. Test mode is currently active.</p>
+            </form>
           </div>
-          <div class="contact-info-card">
-            <h3>&#128665; Delivery</h3>
-            <p>We deliver across Nigeria. Delivery time and fees depend on your location. Contact us on WhatsApp for a delivery quote.</p>
-          </div>
-          <div class="contact-info-card">
-            <h3>&#128336; Business Hours</h3>
-            <p>Monday – Saturday<br>9:00 AM – 7:00 PM</p>
-            <p>Sunday: Limited availability</p>
-          </div>
-          <div class="contact-info-card">
-            <h3>&#128204; How to Order</h3>
-            <ol>
-              <li>Browse our products</li>
-              <li>Add items to your cart</li>
-              <li>Tap "Order via WhatsApp"</li>
-              <li>We confirm and deliver!</li>
-            </ol>
-          </div>
-          <div class="contact-info-card">
-            <h3>&#10067; FAQs</h3>
-            <p><strong>Can I return an item?</strong><br>Yes, within 48 hours of delivery. See our <a href="refund-policy.html">Refund &amp; Return Policy</a>.</p>
-            <p><strong>Do you do custom orders?</strong><br>Contact us to discuss.</p>
-          </div>
-          <div class="contact-info-card">
-            <h3>&#9993; Email Us</h3>
-            <p>For anything that needs a written record, email us at:</p>
-            <a href="mailto:katenovascollections@gmail.com" class="map-link">katenovascollections@gmail.com &rarr;</a>
+
+          <div class="checkout-summary-card">
+            <h2>Order Summary</h2>
+            <div id="checkoutSummaryItems" class="checkout-summary-items"></div>
+            <div class="checkout-summary-row total">
+              <span>Total</span>
+              <span id="checkoutTotal">₦0</span>
+            </div>
           </div>
         </div>
       </div>
@@ -103,6 +100,8 @@
         <p class="footer-copy">&copy; 2026 Katenovas Collections. All rights reserved.</p>
       </div>
     </footer>
+
+    <div id="toast" class="toast hidden"></div>
 
     <script type="module" src="app.js"></script>
   </body>

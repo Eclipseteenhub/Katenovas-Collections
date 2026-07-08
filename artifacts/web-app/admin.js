@@ -5,15 +5,15 @@
    Admin portal — talks to the API
    ═══════════════════════════════════════ */
 
-const ADMIN_CREDS = { username: '@Eragbai50', password: '408258' };
-const SESSION_KEY = 'kc_admin_session';
-const API_BASE    = '/api';
+const API_BASE = '/api';
+const ORDER_STATUSES = ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'];
 
 /* ─── API helpers ─────────────────────── */
 
 async function apiFetch(path, options) {
   const res = await fetch(API_BASE + path, {
     headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
     ...options
   });
   if (!res.ok) {
@@ -28,16 +28,32 @@ async function createProduct(data) { return apiFetch('/products', { method: 'POS
 async function updateProduct(id, data) { return apiFetch('/products/' + id, { method: 'PUT', body: JSON.stringify(data) }); }
 async function deleteProductById(id) { return apiFetch('/products/' + id, { method: 'DELETE' }); }
 
-/* ─── Auth helpers ────────────────────── */
-
-function isLoggedIn() { return sessionStorage.getItem(SESSION_KEY) === 'true'; }
-
-function checkAuth() {
-  if (!isLoggedIn()) window.location.href = 'admin-login.html';
+async function fetchOrders(search) {
+  const qs = search ? '?search=' + encodeURIComponent(search) : '';
+  return apiFetch('/orders' + qs);
+}
+async function updateOrderStatus(id, orderStatus) {
+  return apiFetch('/orders/' + id, { method: 'PATCH', body: JSON.stringify({ orderStatus }) });
 }
 
-function logout() {
-  sessionStorage.removeItem(SESSION_KEY);
+/* ─── Auth helpers ────────────────────── */
+
+async function checkSession() {
+  try {
+    const data = await apiFetch('/admin/session');
+    return Boolean(data.authenticated);
+  } catch {
+    return false;
+  }
+}
+
+async function login(username, password) {
+  return apiFetch('/admin/login', { method: 'POST', body: JSON.stringify({ username, password }) });
+}
+
+async function logout() {
+  try { await apiFetch('/admin/logout', { method: 'POST' }); }
+  catch { /* proceed to login regardless */ }
   window.location.href = 'admin-login.html';
 }
 
@@ -47,6 +63,15 @@ function escHtml(str) {
   return String(str)
     .replace(/&/g, '&amp;').replace(/</g, '&lt;')
     .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function formatPrice(n) {
+  return '\u20a6' + Number(n).toLocaleString('en-NG');
+}
+
+function formatDate(d) {
+  try { return new Date(d).toLocaleString('en-NG', { dateStyle: 'medium', timeStyle: 'short' }); }
+  catch { return ''; }
 }
 
 /* ─── Toast ───────────────────────────── */
@@ -129,6 +154,72 @@ async function renderAdminProducts() {
   });
 
   updateStats(products);
+}
+
+/* ─── Render: Admin orders list ───────── */
+
+async function renderAdminOrders(search) {
+  const list  = document.getElementById('adminOrdersList');
+  const empty = document.getElementById('noOrders');
+  if (!list) return;
+
+  let orders;
+  try {
+    orders = await fetchOrders(search);
+  } catch {
+    showToast('Could not load orders. Check your connection.', 'error');
+    return;
+  }
+
+  if (orders.length === 0) {
+    list.innerHTML = '';
+    if (empty) empty.classList.remove('hidden');
+    return;
+  }
+
+  if (empty) empty.classList.add('hidden');
+
+  list.innerHTML = orders.map(o => `
+    <div class="admin-order-row">
+      <div class="admin-order-top">
+        <span class="admin-order-customer">${escHtml(o.customerName)}</span>
+        <span class="admin-order-ref">${escHtml(o.paystackReference)}</span>
+      </div>
+      <p class="admin-order-meta">
+        ${escHtml(o.customerPhone)} &bull; ${escHtml(o.customerEmail)}<br>
+        ${escHtml(o.customerAddress)}<br>
+        ${formatDate(o.createdAt)}
+      </p>
+      <div class="admin-order-items">
+        ${(o.items || []).map(it => `<span>${escHtml(it.name)} \u00d7 ${it.qty} \u2014 ${formatPrice(it.price * it.qty)}</span>`).join('')}
+      </div>
+      <div class="admin-order-bottom">
+        <span class="admin-order-total">${formatPrice(o.totalAmount)}</span>
+        <span class="status-badge status-${escHtml((o.paymentStatus || '').toLowerCase())}">Payment: ${escHtml(o.paymentStatus)}</span>
+        <select class="order-status-select" data-order-id="${escHtml(o.id)}">
+          ${ORDER_STATUSES.map(s => `<option value="${s}" ${s === o.orderStatus ? 'selected' : ''}>${s}</option>`).join('')}
+        </select>
+      </div>
+    </div>
+  `).join('');
+
+  list.querySelectorAll('.order-status-select').forEach(sel => {
+    sel.addEventListener('change', async () => {
+      const id = sel.dataset.orderId;
+      const prevValue = sel.dataset.prev || sel.value;
+      sel.disabled = true;
+      try {
+        await updateOrderStatus(id, sel.value);
+        sel.dataset.prev = sel.value;
+        showToast('Order status updated.');
+      } catch (err) {
+        sel.value = prevValue;
+        showToast(err.message || 'Failed to update order status.', 'error');
+      } finally {
+        sel.disabled = false;
+      }
+    });
+  });
 }
 
 /* ─── Field validation helpers ────────── */
@@ -324,30 +415,58 @@ function handleImageUpload(file) {
   reader.readAsDataURL(file);
 }
 
+/* ─── Tabs ────────────────────────────── */
+
+function initTabs() {
+  const tabBtns   = document.querySelectorAll('.admin-tab-btn');
+  const tabPanels = document.querySelectorAll('.admin-tab-panel');
+  if (!tabBtns.length) return;
+
+  tabBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      tabBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const target = btn.dataset.tab;
+      tabPanels.forEach(panel => {
+        panel.classList.toggle('hidden', panel.dataset.tabPanel !== target);
+      });
+      if (target === 'orders') renderAdminOrders(document.getElementById('orderSearchInput')?.value || '');
+    });
+  });
+}
+
 /* ─── Init: Login page ────────────────── */
 
 function initLoginPage() {
-  if (isLoggedIn()) {
-    window.location.href = 'admin-dashboard.html';
-    return;
-  }
-
   const form = document.getElementById('adminLoginForm');
   if (!form) return;
 
-  form.addEventListener('submit', e => {
+  checkSession().then(authenticated => {
+    if (authenticated) window.location.href = 'admin-dashboard.html';
+  });
+
+  form.addEventListener('submit', async e => {
     e.preventDefault();
     const username = document.getElementById('username').value.trim();
     const password = document.getElementById('password').value;
     const errorEl  = document.getElementById('loginError');
+    const submitBtn = form.querySelector('button[type="submit"]');
 
-    if (username === ADMIN_CREDS.username && password === ADMIN_CREDS.password) {
-      sessionStorage.setItem(SESSION_KEY, 'true');
+    if (errorEl) errorEl.classList.add('hidden');
+    if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Logging in\u2026'; }
+
+    try {
+      await login(username, password);
       window.location.href = 'admin-dashboard.html';
-    } else {
-      if (errorEl) errorEl.classList.remove('hidden');
+    } catch (err) {
+      if (errorEl) {
+        errorEl.textContent = err.message || 'Invalid username or password.';
+        errorEl.classList.remove('hidden');
+      }
       document.getElementById('password').value = '';
       document.getElementById('password').focus();
+    } finally {
+      if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Log In'; }
     }
   });
 
@@ -363,9 +482,15 @@ function initLoginPage() {
 
 /* ─── Init: Dashboard page ────────────── */
 
-function initDashboardPage() {
-  checkAuth();
+async function initDashboardPage() {
+  const authenticated = await checkSession();
+  if (!authenticated) {
+    window.location.href = 'admin-login.html';
+    return;
+  }
+
   renderAdminProducts();
+  initTabs();
 
   document.getElementById('addProductBtn').addEventListener('click', openAddModal);
   document.getElementById('logoutBtn').addEventListener('click', logout);
@@ -398,6 +523,15 @@ function initDashboardPage() {
     if (el) el.addEventListener('input', () => clearFieldError(id));
     if (el) el.addEventListener('change', () => clearFieldError(id));
   });
+
+  const orderSearch = document.getElementById('orderSearchInput');
+  if (orderSearch) {
+    let debounceTimer;
+    orderSearch.addEventListener('input', () => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => renderAdminOrders(orderSearch.value), 300);
+    });
+  }
 }
 
 /* ─── Page init ───────────────────────── */

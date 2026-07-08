@@ -18,7 +18,10 @@ async function apiFetch(path, options) {
     headers: { 'Content-Type': 'application/json' },
     ...options
   });
-  if (!res.ok) throw new Error('API error ' + res.status);
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error || ('API error ' + res.status));
+  }
   return res.json();
 }
 
@@ -335,6 +338,121 @@ async function initCartPage() {
   }
 }
 
+/* ─── Init: Checkout page ─────────────── */
+
+async function initCheckoutPage() {
+  const layout = document.getElementById('checkoutLayout');
+  const empty  = document.getElementById('checkoutEmpty');
+  const summaryItemsEl = document.getElementById('checkoutSummaryItems');
+  const totalEl = document.getElementById('checkoutTotal');
+  const form    = document.getElementById('checkoutForm');
+  const payBtn  = document.getElementById('payBtn');
+  if (!layout || !form) return;
+
+  const cart     = getCart();
+  const products = await fetchProducts();
+
+  if (cart.length === 0) {
+    layout.classList.add('hidden');
+    if (empty) empty.classList.remove('hidden');
+    return;
+  }
+
+  const lineItems = cart
+    .map(item => {
+      const p = products.find(pr => pr.id === item.id);
+      if (!p) return null;
+      return { product: p, qty: item.qty };
+    })
+    .filter(Boolean);
+
+  summaryItemsEl.innerHTML = lineItems.map(({ product, qty }) => `
+    <div class="checkout-summary-row">
+      <span>${escHtml(product.name)} &times; ${qty}</span>
+      <span>${formatPrice(product.price * qty)}</span>
+    </div>
+  `).join('');
+
+  const total = getCartTotal(products);
+  totalEl.textContent = formatPrice(total);
+
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+
+    const name    = document.getElementById('customerName').value.trim();
+    const phone   = document.getElementById('customerPhone').value.trim();
+    const email   = document.getElementById('customerEmail').value.trim();
+    const address = document.getElementById('customerAddress').value.trim();
+
+    if (!name || !phone || !email || !address) {
+      showToast('Please fill in all fields.');
+      return;
+    }
+
+    payBtn.disabled    = true;
+    payBtn.textContent = 'Redirecting to Paystack\u2026';
+
+    try {
+      const callbackUrl = window.location.origin + window.location.pathname.replace(/checkout\.html$/, 'order-success.html');
+      const data = await apiFetch('/checkout/initialize', {
+        method: 'POST',
+        body: JSON.stringify({
+          items: lineItems.map(({ product, qty }) => ({ id: product.id, qty })),
+          customer: { name, phone, email, address },
+          callbackUrl
+        })
+      });
+      window.location.href = data.authorizationUrl;
+    } catch (err) {
+      showToast(err.message || 'Could not start payment. Please try again.');
+      payBtn.disabled    = false;
+      payBtn.textContent = 'Pay with Paystack';
+    }
+  });
+}
+
+/* ─── Init: Order success page ────────── */
+
+async function initOrderSuccessPage() {
+  const box     = document.getElementById('orderStatusBox');
+  const titleEl = document.getElementById('orderStatusTitle');
+  const msgEl   = document.getElementById('orderStatusMessage');
+  if (!box) return;
+
+  const params    = new URLSearchParams(window.location.search);
+  const reference = params.get('reference') || params.get('trxref');
+
+  if (!reference) {
+    box.classList.add('failed');
+    box.querySelector('.order-status-icon').textContent = '\u2716';
+    titleEl.textContent = 'No payment reference found';
+    msgEl.textContent   = 'We could not find a payment reference in this link. If you completed a payment, please contact us on WhatsApp.';
+    return;
+  }
+
+  try {
+    const data = await apiFetch('/checkout/verify/' + encodeURIComponent(reference));
+
+    if (data.status === 'success') {
+      saveCart([]);
+      box.classList.add('success');
+      box.querySelector('.order-status-icon').textContent = '\u2705';
+      titleEl.textContent = 'Payment Successful!';
+      msgEl.innerHTML = `Thank you, ${escHtml(data.order.customerName)}! Your order has been received and is being processed.<br><span class="order-ref">Ref: ${escHtml(reference)}</span><br>We'll reach out on WhatsApp/phone with delivery updates.`;
+    } else {
+      box.classList.add('failed');
+      box.querySelector('.order-status-icon').textContent = '\u2716';
+      titleEl.textContent = 'Payment Not Successful';
+      msgEl.innerHTML = `Your payment could not be confirmed.<br><span class="order-ref">Ref: ${escHtml(reference)}</span><br>No charge was completed. Please try again or contact us on WhatsApp for help.`;
+    }
+  } catch (err) {
+    box.classList.add('failed');
+    box.querySelector('.order-status-icon').textContent = '\u2716';
+    titleEl.textContent = 'Could Not Verify Payment';
+    msgEl.textContent   = 'We could not verify this payment right now. Please contact us on WhatsApp with your order reference.';
+  }
+}
+
 /* ─── Page init ───────────────────────── */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -344,4 +462,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const path = window.location.pathname;
   if (path.includes('products')) { initProductsPage(); }
   else if (path.includes('cart')) { initCartPage(); }
+  else if (path.includes('checkout')) { initCheckoutPage(); }
+  else if (path.includes('order-success')) { initOrderSuccessPage(); }
 });

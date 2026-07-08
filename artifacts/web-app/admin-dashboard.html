@@ -23,26 +23,42 @@
     <main class="admin-main">
       <div class="container">
 
-        <div class="admin-toolbar">
-          <div class="admin-stats">
-            <div class="stat-card">
-              <span class="stat-number" id="totalProducts">0</span>
-              <span class="stat-label">Total Products</span>
-            </div>
-            <div class="stat-card">
-              <span class="stat-number" id="inStockCount">0</span>
-              <span class="stat-label">In Stock</span>
-            </div>
-            <div class="stat-card">
-              <span class="stat-number" id="outStockCount">0</span>
-              <span class="stat-label">Out of Stock</span>
-            </div>
-          </div>
-          <button id="addProductBtn" class="btn btn-gold">+ Add Product</button>
+        <div class="admin-tabs">
+          <button class="admin-tab-btn active" data-tab="products">Products</button>
+          <button class="admin-tab-btn" data-tab="orders">Orders</button>
         </div>
 
-        <div id="adminProductsList" class="admin-products-list"></div>
-        <p id="noProducts" class="empty-message hidden">No products yet. Add your first product above.</p>
+        <div class="admin-tab-panel" data-tab-panel="products">
+          <div class="admin-toolbar">
+            <div class="admin-stats">
+              <div class="stat-card">
+                <span class="stat-number" id="totalProducts">0</span>
+                <span class="stat-label">Total Products</span>
+              </div>
+              <div class="stat-card">
+                <span class="stat-number" id="inStockCount">0</span>
+                <span class="stat-label">In Stock</span>
+              </div>
+              <div class="stat-card">
+                <span class="stat-number" id="outStockCount">0</span>
+                <span class="stat-label">Out of Stock</span>
+              </div>
+            </div>
+            <button id="addProductBtn" class="btn btn-gold">+ Add Product</button>
+          </div>
+
+          <div id="adminProductsList" class="admin-products-list"></div>
+          <p id="noProducts" class="empty-message hidden">No products yet. Add your first product above.</p>
+        </div>
+
+        <div class="admin-tab-panel hidden" data-tab-panel="orders">
+          <div class="admin-orders-toolbar">
+            <input type="text" id="orderSearchInput" class="search-input" placeholder="Search by customer name, phone, or reference..." />
+          </div>
+
+          <div id="adminOrdersList" class="admin-orders-list"></div>
+          <p id="noOrders" class="empty-message hidden">No orders yet.</p>
+        </div>
 
       </div>
     </main>

@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Products — Katenovas Collections</title>
+    <title>About Us — Katenovas Collections</title>
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
@@ -17,35 +17,43 @@
         <nav class="site-nav" id="siteNav">
           <button class="nav-close" id="navClose" aria-label="Close menu">&times;</button>
           <a href="index.html" class="nav-link">Home</a>
-          <a href="products.html" class="nav-link active">Products</a>
+          <a href="products.html" class="nav-link">Products</a>
           <a href="cart.html" class="nav-link cart-link">
             Cart <span class="cart-badge" id="cartBadge">0</span>
           </a>
-          <a href="about.html" class="nav-link">About</a>
+          <a href="about.html" class="nav-link active">About</a>
           <a href="contact.html" class="nav-link">Contact</a>
         </nav>
       </div>
     </header>
 
     <main class="page-main">
-      <div class="container">
-        <div class="products-toolbar">
-          <h1 class="page-title">Our Products</h1>
-          <div class="search-wrap">
-            <input type="search" id="searchInput" class="search-input" placeholder="Search products..." />
-          </div>
-          <div class="filter-wrap">
-            <button class="filter-btn active" data-category="All">All</button>
-            <button class="filter-btn" data-category="Clothes">Clothes</button>
-            <button class="filter-btn" data-category="Jewelry">Jewelry</button>
-            <button class="filter-btn" data-category="Home Accessories">Home</button>
-            <button class="filter-btn" data-category="Shoes">Shoes</button>
-            <button class="filter-btn" data-category="Bags">Bags</button>
+      <div class="container container-narrow">
+        <h1 class="page-title">About Katenovas Collections</h1>
+
+        <div class="about-story">
+          <p>Katenovas Collections is a Nigerian fashion and lifestyle brand based in Benin City, Edo State. We curate elegant, affordable pieces across Clothes, Jewelry, Home Accessories, Shoes, and Bags — helping our customers look and feel their best without breaking the bank.</p>
+          <p>What started as a small passion for beautiful, well-made pieces has grown into a trusted store for customers across Nigeria who value quality, style, and honest service. Every item in our collection is hand-picked with care.</p>
+          <p>We believe shopping should be simple and personal — that's why we make ordering as easy as a WhatsApp message or a few clicks at checkout, with real people behind every order.</p>
+
+          <div class="about-values-grid">
+            <div class="benefit-card">
+              <div class="benefit-icon">&#10024;</div>
+              <h3>Quality First</h3>
+              <p>Every piece is checked for quality before it reaches you.</p>
+            </div>
+            <div class="benefit-card">
+              <div class="benefit-icon">&#128176;</div>
+              <h3>Fair Prices</h3>
+              <p>Beautiful, affordable products for everyday elegance.</p>
+            </div>
+            <div class="benefit-card">
+              <div class="benefit-icon">&#129309;</div>
+              <h3>Real Support</h3>
+              <p>Reach a real person on WhatsApp for any question.</p>
+            </div>
           </div>
         </div>
-
-        <div id="productsGrid" class="products-grid"></div>
-        <p id="emptyMessage" class="empty-message hidden">No products found. Check back soon!</p>
       </div>
     </main>
 
@@ -74,8 +82,6 @@
         <p class="footer-copy">&copy; 2026 Katenovas Collections. All rights reserved.</p>
       </div>
     </footer>
-
-    <div id="toast" class="toast hidden"></div>
 
     <script type="module" src="app.js"></script>
   </body>
