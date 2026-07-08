@@ -510,6 +510,28 @@ ul { list-style: none; }
 
 .footer-nav-secondary a:hover { color: var(--gold); }
 
+.footer-tagline {
+  color: rgba(255,255,255,0.5);
+  font-size: 0.82rem;
+  margin: 0 0 0.75rem;
+}
+
+.footer-social {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin: 0 0 1rem;
+}
+
+.footer-social a {
+  color: rgba(255,255,255,0.65);
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: color 0.2s;
+}
+
+.footer-social a:hover { color: var(--gold); }
+
 .footer-contact {
   color: rgba(255,255,255,0.55);
   font-size: 0.85rem;
