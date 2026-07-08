@@ -1,13 +1,13 @@
-# [Project name]
+# Katenovas Collections
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+An e-commerce website for a Nigerian fashion & lifestyle brand selling Clothes, Jewelry, Home Accessories, Shoes, and Bags — customers browse and order via WhatsApp, and the owner manages products through an admin dashboard.
 
 ## Run & Operate
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
+- `pnpm --filter @workspace/api-server run dev` — run the API server
+- `pnpm --filter @workspace/web-app run dev` — run the website (Vite)
 - `pnpm run typecheck` — full typecheck across all packages
 - `pnpm run build` — typecheck + build all packages
-- `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
 - `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
 - Required env: `DATABASE_URL` — Postgres connection string
 
@@ -16,29 +16,40 @@ _Replace the heading above with the project's name, and this line with one sente
 - pnpm workspaces, Node.js 24, TypeScript 5.9
 - API: Express 5
 - DB: PostgreSQL + Drizzle ORM
-- Validation: Zod (`zod/v4`), `drizzle-zod`
-- API codegen: Orval (from OpenAPI spec)
-- Build: esbuild (CJS bundle)
+- Validation: Zod, `drizzle-zod`
+- Frontend: plain HTML/CSS/JS (no framework), served by Vite
+- Build: esbuild (server), Vite (client)
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `artifacts/web-app/` — customer site + admin dashboard (index, products, cart, contact, admin-login, admin-dashboard)
+- `artifacts/web-app/app.js` — customer-facing logic (browsing, cart, WhatsApp checkout)
+- `artifacts/web-app/admin.js` — admin login + product CRUD UI
+- `artifacts/api-server/src/routes/products.ts` — product CRUD API (`/api/products`)
+- `lib/db/src/schema/products.ts` — product DB schema (Drizzle)
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- Products live in Postgres (via the API); the shopping cart stays in the browser's `localStorage` per device — carts are not shared across devices, by design.
+- Checkout has no payment processor — it hands the cart off to WhatsApp as a pre-filled message to the store's number for the owner to confirm manually.
+- Admin login is a hardcoded username/password checked client-side, with the session flag stored in `sessionStorage`. There is no real backend auth/authorization on the product API itself.
+- Product images are uploaded as base64 data URLs and stored directly in the database (no object storage).
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+- **Customers:** browse products by category (Clothes, Jewelry, Home Accessories, Shoes, Bags), search, add to cart, and check out via a pre-filled WhatsApp message to place an order.
+- **Admin:** log in at `/admin-login.html`, then add/edit/delete products (name, price, category, description, image, in-stock toggle) from `/admin-dashboard.html`. Changes appear on the live site immediately.
 
 ## User preferences
 
-_Populate as you build — explicit user instructions worth remembering across sessions._
+- WhatsApp order number: `2348025497647`
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- All `<script>` tags must keep `type="module"` — without it, Vite silently drops the JS file from the production build.
+- Any DOM element created dynamically via `innerHTML` (product cards, cart rows, admin rows) must use `addEventListener`/event delegation, not inline `onclick="..."` — inline handlers can't see module-scoped functions.
+- Product images are base64-encoded in the request body; the API's JSON body limit is raised to 10mb to accommodate them.
+- After changing `artifacts/web-app/*.html` or JS, run `pnpm --filter @workspace/web-app run build` before publishing so the production bundle picks up the change.
 
 ## Pointers
 
