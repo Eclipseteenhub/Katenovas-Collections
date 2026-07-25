@@ -6,7 +6,10 @@
    ═══════════════════════════════════════ */
 
 const API_BASE = '/api';
-const ORDER_STATUSES = ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'];
+const ORDER_STATUSES = [
+  'Pending', 'Processing', 'Ready for Dispatch',
+  'Shipped', 'Out for Delivery', 'Delivered', 'Cancelled'
+];
 
 /* ─── API helpers ─────────────────────── */
 
@@ -32,9 +35,12 @@ async function fetchOrders(search) {
   const qs = search ? '?search=' + encodeURIComponent(search) : '';
   return apiFetch('/orders' + qs);
 }
-async function updateOrderStatus(id, orderStatus) {
-  return apiFetch('/orders/' + id, { method: 'PATCH', body: JSON.stringify({ orderStatus }) });
+async function patchOrder(id, data) {
+  return apiFetch('/orders/' + id, { method: 'PATCH', body: JSON.stringify(data) });
 }
+
+async function fetchEmailLogs() { return apiFetch('/email-logs'); }
+async function sendTestEmail() { return apiFetch('/email-logs/test', { method: 'POST' }); }
 
 /* ─── Auth helpers ────────────────────── */
 
@@ -42,9 +48,7 @@ async function checkSession() {
   try {
     const data = await apiFetch('/admin/session');
     return Boolean(data.authenticated);
-  } catch {
-    return false;
-  }
+  } catch { return false; }
 }
 
 async function login(username, password) {
@@ -52,8 +56,7 @@ async function login(username, password) {
 }
 
 async function logout() {
-  try { await apiFetch('/admin/logout', { method: 'POST' }); }
-  catch { /* proceed to login regardless */ }
+  try { await apiFetch('/admin/logout', { method: 'POST' }); } catch {}
   window.location.href = 'admin-login.html';
 }
 
@@ -64,11 +67,7 @@ function escHtml(str) {
     .replace(/&/g, '&amp;').replace(/</g, '&lt;')
     .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
-
-function formatPrice(n) {
-  return '\u20a6' + Number(n).toLocaleString('en-NG');
-}
-
+function formatPrice(n) { return '\u20a6' + Number(n).toLocaleString('en-NG'); }
 function formatDate(d) {
   try { return new Date(d).toLocaleString('en-NG', { dateStyle: 'medium', timeStyle: 'short' }); }
   catch { return ''; }
@@ -104,10 +103,9 @@ async function renderAdminProducts() {
   if (!list) return;
 
   let products;
-  try {
-    products = await fetchProducts();
-  } catch {
-    showToast('Could not load products. Check your connection.', 'error');
+  try { products = await fetchProducts(); }
+  catch {
+    showToast('Could not load products.', 'error');
     return;
   }
 
@@ -117,34 +115,36 @@ async function renderAdminProducts() {
     updateStats(products);
     return;
   }
-
   if (empty) empty.classList.add('hidden');
 
-  list.innerHTML = products.map(p => `
+  list.innerHTML = products.map(p => {
+    const colors = Array.isArray(p.colors) ? p.colors.join(', ') : (p.colors || '');
+    const sizes  = Array.isArray(p.sizes)  ? p.sizes.join(', ')  : (p.sizes  || '');
+    return `
     <div class="admin-product-row">
       <div class="admin-product-img">
         ${p.image
           ? `<img src="${p.image}" alt="${escHtml(p.name)}" />`
-          : `<div class="product-img-placeholder small">\uD83D\uDCE6</div>`
-        }
+          : `<div class="product-img-placeholder small">\uD83D\uDCE6</div>`}
       </div>
       <div class="admin-product-info">
         <h3>${escHtml(p.name)}</h3>
         <p class="admin-product-meta">
           <span>${escHtml(p.category)}</span> &bull;
-          <strong>\u20a6${Number(p.price).toLocaleString('en-NG')}</strong> &bull;
-          <span class="stock-badge ${p.inStock ? 'in-stock' : 'out-stock'}">
-            ${p.inStock ? 'In Stock' : 'Out of Stock'}
-          </span>
+          <strong>${formatPrice(p.price)}</strong> &bull;
+          <span class="stock-badge ${p.inStock ? 'in-stock' : 'out-stock'}">${p.inStock ? 'In Stock' : 'Out of Stock'}</span>
+          ${p.stockCount ? `&bull; <span>Qty: ${p.stockCount}</span>` : ''}
         </p>
+        ${colors ? `<p class="admin-product-desc">Colors: ${escHtml(colors)}</p>` : ''}
+        ${sizes  ? `<p class="admin-product-desc">Sizes: ${escHtml(sizes)}</p>` : ''}
         ${p.description ? `<p class="admin-product-desc">${escHtml(p.description)}</p>` : ''}
       </div>
       <div class="admin-product-actions">
         <button class="btn btn-sm btn-outline" data-edit="${escHtml(p.id)}">Edit</button>
         <button class="btn btn-sm btn-danger"  data-delete="${escHtml(p.id)}">Delete</button>
       </div>
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
 
   list.querySelectorAll('[data-edit]').forEach(btn => {
     btn.addEventListener('click', () => openEditModal(btn.dataset.edit, products));
@@ -164,10 +164,9 @@ async function renderAdminOrders(search) {
   if (!list) return;
 
   let orders;
-  try {
-    orders = await fetchOrders(search);
-  } catch {
-    showToast('Could not load orders. Check your connection.', 'error');
+  try { orders = await fetchOrders(search); }
+  catch {
+    showToast('Could not load orders.', 'error');
     return;
   }
 
@@ -176,22 +175,26 @@ async function renderAdminOrders(search) {
     if (empty) empty.classList.remove('hidden');
     return;
   }
-
   if (empty) empty.classList.add('hidden');
 
-  list.innerHTML = orders.map(o => `
+  list.innerHTML = orders.map(o => {
+    const location = [o.customerCity, o.customerState].filter(Boolean).join(', ');
+    const landmark = o.customerLandmark ? `<br><em>Landmark: ${escHtml(o.customerLandmark)}</em>` : '';
+    return `
     <div class="admin-order-row">
       <div class="admin-order-top">
         <span class="admin-order-customer">${escHtml(o.customerName)}</span>
         <span class="admin-order-ref">${escHtml(o.paystackReference)}</span>
       </div>
       <p class="admin-order-meta">
-        ${escHtml(o.customerPhone)} &bull; ${escHtml(o.customerEmail)}<br>
-        ${escHtml(o.customerAddress)}<br>
-        ${formatDate(o.createdAt)}
+        <a href="https://wa.me/${escHtml(o.customerPhone.replace(/\D/g,''))}" target="_blank" class="wa-link">
+          📱 ${escHtml(o.customerPhone)}
+        </a> &bull; ${escHtml(o.customerEmail)}<br>
+        📍 ${escHtml(o.customerAddress)}${location ? ', ' + escHtml(location) : ''}${landmark}<br>
+        🕐 ${formatDate(o.createdAt)}
       </p>
       <div class="admin-order-items">
-        ${(o.items || []).map(it => `<span>${escHtml(it.name)} \u00d7 ${it.qty} \u2014 ${formatPrice(it.price * it.qty)}</span>`).join('')}
+        ${(o.items || []).map(it => `<span>${escHtml(it.name)} &times; ${it.qty} &mdash; ${formatPrice(it.price * it.qty)}</span>`).join('')}
       </div>
       <div class="admin-order-bottom">
         <span class="admin-order-total">${formatPrice(o.totalAmount)}</span>
@@ -199,36 +202,114 @@ async function renderAdminOrders(search) {
         <select class="order-status-select" data-order-id="${escHtml(o.id)}">
           ${ORDER_STATUSES.map(s => `<option value="${s}" ${s === o.orderStatus ? 'selected' : ''}>${s}</option>`).join('')}
         </select>
+        <button class="btn btn-sm btn-outline notes-btn" data-order-id="${escHtml(o.id)}" data-notes="${escHtml(o.sellerNotes || '')}">
+          📝 ${o.sellerNotes ? 'Edit Notes' : 'Add Notes'}
+        </button>
       </div>
-    </div>
-  `).join('');
+      ${o.sellerNotes ? `<p class="seller-notes-preview">📝 ${escHtml(o.sellerNotes)}</p>` : ''}
+    </div>`;
+  }).join('');
 
   list.querySelectorAll('.order-status-select').forEach(sel => {
     sel.addEventListener('change', async () => {
-      const id = sel.dataset.orderId;
+      const id        = sel.dataset.orderId;
       const prevValue = sel.dataset.prev || sel.value;
-      sel.disabled = true;
+      sel.disabled    = true;
       try {
-        await updateOrderStatus(id, sel.value);
+        await patchOrder(id, { orderStatus: sel.value });
         sel.dataset.prev = sel.value;
-        showToast('Order status updated.');
+        showToast('Status updated — customer email sent.');
       } catch (err) {
         sel.value = prevValue;
-        showToast(err.message || 'Failed to update order status.', 'error');
-      } finally {
-        sel.disabled = false;
-      }
+        showToast(err.message || 'Failed to update status.', 'error');
+      } finally { sel.disabled = false; }
     });
+  });
+
+  list.querySelectorAll('.notes-btn').forEach(btn => {
+    btn.addEventListener('click', () => openNotesModal(btn.dataset.orderId, btn.dataset.notes || ''));
   });
 }
 
-/* ─── Field validation helpers ────────── */
+/* ─── Render: Email logs ──────────────── */
+
+async function renderEmailLogs() {
+  const list  = document.getElementById('adminEmailLogsList');
+  const empty = document.getElementById('noEmailLogs');
+  if (!list) return;
+
+  let logs;
+  try { logs = await fetchEmailLogs(); }
+  catch {
+    showToast('Could not load email logs.', 'error');
+    return;
+  }
+
+  if (!logs || logs.length === 0) {
+    list.innerHTML = '';
+    if (empty) empty.classList.remove('hidden');
+    return;
+  }
+  if (empty) empty.classList.add('hidden');
+
+  list.innerHTML = logs.map(log => `
+    <div class="email-log-row">
+      <div class="email-log-main">
+        <span class="email-log-type">${escHtml(log.emailType.replace(/_/g, ' '))}</span>
+        <span class="email-log-subject">${escHtml(log.subject)}</span>
+      </div>
+      <div class="email-log-meta">
+        <span class="email-log-recipient">To: ${escHtml(log.recipient)}</span>
+        <span class="status-badge ${log.status === 'sent' ? 'status-success' : 'status-failed'}">
+          ${log.status === 'sent' ? '✅ Sent' : '❌ Failed'}
+        </span>
+        <span class="email-log-date">${formatDate(log.createdAt)}</span>
+      </div>
+      ${log.errorMessage ? `<p class="email-log-error">Error: ${escHtml(log.errorMessage)}</p>` : ''}
+    </div>
+  `).join('');
+}
+
+/* ─── Notes modal ─────────────────────── */
+
+function openNotesModal(orderId, notes) {
+  document.getElementById('notesOrderId').value = orderId;
+  document.getElementById('notesTextarea').value = notes;
+  document.getElementById('notesModal').classList.remove('hidden');
+  document.body.classList.add('modal-open');
+}
+
+function closeNotesModal() {
+  document.getElementById('notesModal').classList.add('hidden');
+  document.body.classList.remove('modal-open');
+}
+
+async function saveNotes() {
+  const orderId = document.getElementById('notesOrderId').value;
+  const notes   = document.getElementById('notesTextarea').value.trim();
+  const saveBtn = document.getElementById('saveNotes');
+  saveBtn.disabled    = true;
+  saveBtn.textContent = 'Saving…';
+  try {
+    await patchOrder(orderId, { sellerNotes: notes });
+    closeNotesModal();
+    showToast('Notes saved.');
+    await renderAdminOrders(document.getElementById('orderSearchInput')?.value || '');
+  } catch (err) {
+    showToast(err.message || 'Failed to save notes.', 'error');
+  } finally {
+    saveBtn.disabled    = false;
+    saveBtn.textContent = 'Save Notes';
+  }
+}
+
+/* ─── Field validation ────────────────── */
 
 function setFieldError(id, msg) {
   const el = document.getElementById(id);
   if (!el) return;
   el.classList.add('input-error');
-  let hint = el.parentElement.querySelector('.field-hint');
+  let hint = el.parentElement.querySelector('.field-hint.error-hint');
   if (!hint) {
     hint = document.createElement('p');
     hint.className = 'field-hint error-hint';
@@ -241,12 +322,12 @@ function clearFieldError(id) {
   const el = document.getElementById(id);
   if (!el) return;
   el.classList.remove('input-error');
-  const hint = el.parentElement.querySelector('.field-hint');
+  const hint = el.parentElement.querySelector('.field-hint.error-hint');
   if (hint) hint.remove();
 }
 
 function clearAllFieldErrors() {
-  ['productName', 'productPrice', 'productCategory'].forEach(clearFieldError);
+  ['productName','productPrice','productCategory'].forEach(clearFieldError);
 }
 
 /* ─── Modal ───────────────────────────── */
@@ -257,6 +338,9 @@ function clearForm() {
   document.getElementById('productForm').reset();
   document.getElementById('productId').value        = '';
   document.getElementById('productImageData').value = '';
+  document.getElementById('productStockCount').value = '0';
+  document.getElementById('productColors').value    = '';
+  document.getElementById('productSizes').value     = '';
   const preview = document.getElementById('imagePreview');
   const label   = document.getElementById('imageUploadLabel');
   if (preview) { preview.src = ''; preview.classList.add('hidden'); }
@@ -287,6 +371,9 @@ function openEditModal(id, products) {
   document.getElementById('productDescription').value = product.description || '';
   document.getElementById('productInStock').checked   = product.inStock;
   document.getElementById('productImageData').value   = product.image || '';
+  document.getElementById('productStockCount').value  = product.stockCount || 0;
+  document.getElementById('productColors').value      = Array.isArray(product.colors) ? product.colors.join(', ') : (product.colors || '');
+  document.getElementById('productSizes').value       = Array.isArray(product.sizes)  ? product.sizes.join(', ')  : (product.sizes  || '');
   clearAllFieldErrors();
 
   const preview = document.getElementById('imagePreview');
@@ -324,46 +411,34 @@ async function saveProduct(e) {
   const description = document.getElementById('productDescription').value.trim();
   const image       = document.getElementById('productImageData').value;
   const inStock     = document.getElementById('productInStock').checked;
+  const stockCount  = parseInt(document.getElementById('productStockCount').value || '0', 10) || 0;
+  const colors      = document.getElementById('productColors').value.trim();
+  const sizes       = document.getElementById('productSizes').value.trim();
 
-  // Validate each field individually
   let hasError = false;
-
-  if (!name) {
-    setFieldError('productName', 'Product name is required.');
-    hasError = true;
-  }
-
-  if (!priceRaw || isNaN(price) || price < 0) {
-    setFieldError('productPrice', 'Enter a valid price (e.g. 5000).');
-    hasError = true;
-  }
-
-  if (!category) {
-    setFieldError('productCategory', 'Please select a category.');
-    hasError = true;
-  }
-
-  if (hasError) {
-    showToast('Please fix the highlighted fields.', 'error');
-    return;
-  }
+  if (!name)                             { setFieldError('productName',     'Product name is required.');    hasError = true; }
+  if (!priceRaw || isNaN(price) || price < 0) { setFieldError('productPrice', 'Enter a valid price.');      hasError = true; }
+  if (!category)                         { setFieldError('productCategory', 'Please select a category.');   hasError = true; }
+  if (hasError) { showToast('Please fix the highlighted fields.', 'error'); return; }
 
   const saveBtn = document.getElementById('saveProductBtn');
   saveBtn.disabled    = true;
   saveBtn.textContent = 'Saving\u2026';
 
+  const payload = { name, price, category, description, image, inStock, stockCount, colors, sizes };
+
   try {
     if (editingId) {
-      await updateProduct(editingId, { name, price, category, description, image, inStock });
-      showToast('Product updated successfully!');
+      await updateProduct(editingId, payload);
+      showToast('Product updated!');
     } else {
-      await createProduct({ name, price, category, description, image, inStock });
-      showToast('Product added successfully!');
+      await createProduct(payload);
+      showToast('Product added!');
     }
     closeProductModal();
     await renderAdminProducts();
   } catch (err) {
-    showToast(err.message || 'Failed to save product. Try again.', 'error');
+    showToast(err.message || 'Failed to save product.', 'error');
   } finally {
     saveBtn.disabled    = false;
     saveBtn.textContent = 'Save Product';
@@ -384,7 +459,6 @@ async function executeDelete() {
   const id = pendingDeleteId;
   pendingDeleteId = null;
   document.getElementById('confirmModal').classList.add('hidden');
-
   try {
     await deleteProductById(id);
     showToast('Product deleted.');
@@ -398,17 +472,14 @@ async function executeDelete() {
 
 function handleImageUpload(file) {
   if (!file) return;
-  if (file.size > 3 * 1024 * 1024) {
-    showToast('Image must be under 3 MB.', 'error');
-    return;
-  }
+  if (file.size > 3 * 1024 * 1024) { showToast('Image must be under 3 MB.', 'error'); return; }
   const reader = new FileReader();
   reader.onload = ev => {
     const dataUrl = ev.target.result;
     document.getElementById('productImageData').value = dataUrl;
     const preview = document.getElementById('imagePreview');
     const label   = document.getElementById('imageUploadLabel');
-    preview.src   = dataUrl;
+    preview.src = dataUrl;
     preview.classList.remove('hidden');
     if (label) label.classList.add('hidden');
   };
@@ -430,7 +501,8 @@ function initTabs() {
       tabPanels.forEach(panel => {
         panel.classList.toggle('hidden', panel.dataset.tabPanel !== target);
       });
-      if (target === 'orders') renderAdminOrders(document.getElementById('orderSearchInput')?.value || '');
+      if (target === 'orders')      renderAdminOrders(document.getElementById('orderSearchInput')?.value || '');
+      if (target === 'email-logs')  renderEmailLogs();
     });
   });
 }
@@ -441,15 +513,13 @@ function initLoginPage() {
   const form = document.getElementById('adminLoginForm');
   if (!form) return;
 
-  checkSession().then(authenticated => {
-    if (authenticated) window.location.href = 'admin-dashboard.html';
-  });
+  checkSession().then(auth => { if (auth) window.location.href = 'admin-dashboard.html'; });
 
   form.addEventListener('submit', async e => {
     e.preventDefault();
-    const username = document.getElementById('username').value.trim();
-    const password = document.getElementById('password').value;
-    const errorEl  = document.getElementById('loginError');
+    const username  = document.getElementById('username').value.trim();
+    const password  = document.getElementById('password').value;
+    const errorEl   = document.getElementById('loginError');
     const submitBtn = form.querySelector('button[type="submit"]');
 
     if (errorEl) errorEl.classList.add('hidden');
@@ -459,19 +529,15 @@ function initLoginPage() {
       await login(username, password);
       window.location.href = 'admin-dashboard.html';
     } catch (err) {
-      if (errorEl) {
-        errorEl.textContent = err.message || 'Invalid username or password.';
-        errorEl.classList.remove('hidden');
-      }
+      if (errorEl) { errorEl.textContent = err.message || 'Invalid username or password.'; errorEl.classList.remove('hidden'); }
       document.getElementById('password').value = '';
       document.getElementById('password').focus();
     } finally {
-      if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Log In'; }
+      if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Login'; }
     }
   });
 
-  // Hide error when user starts typing again
-  ['username', 'password'].forEach(id => {
+  ['username','password'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.addEventListener('input', () => {
       const errorEl = document.getElementById('loginError');
@@ -484,10 +550,7 @@ function initLoginPage() {
 
 async function initDashboardPage() {
   const authenticated = await checkSession();
-  if (!authenticated) {
-    window.location.href = 'admin-login.html';
-    return;
-  }
+  if (!authenticated) { window.location.href = 'admin-login.html'; return; }
 
   renderAdminProducts();
   initTabs();
@@ -508,30 +571,54 @@ async function initDashboardPage() {
     if (e.target === document.getElementById('productModal')) closeProductModal();
   });
 
+  document.getElementById('closeNotesModal')?.addEventListener('click', closeNotesModal);
+  document.getElementById('cancelNotes')?.addEventListener('click', closeNotesModal);
+  document.getElementById('saveNotes')?.addEventListener('click', saveNotes);
+  document.getElementById('notesModal')?.addEventListener('click', e => {
+    if (e.target === document.getElementById('notesModal')) closeNotesModal();
+  });
+
   const imageInput = document.getElementById('productImage');
   if (imageInput) {
     imageInput.addEventListener('change', e => handleImageUpload(e.target.files[0]));
   }
   const preview = document.getElementById('imagePreview');
   const label   = document.getElementById('imageUploadLabel');
-  if (preview) preview.addEventListener('click', () => imageInput && imageInput.click());
-  if (label)   label.addEventListener('click',   () => imageInput && imageInput.click());
+  if (preview) preview.addEventListener('click', () => imageInput?.click());
+  if (label)   label.addEventListener('click',   () => imageInput?.click());
 
-  // Clear field errors when user corrects inputs
-  ['productName', 'productPrice', 'productCategory'].forEach(id => {
+  ['productName','productPrice','productCategory'].forEach(id => {
     const el = document.getElementById(id);
-    if (el) el.addEventListener('input', () => clearFieldError(id));
+    if (el) el.addEventListener('input',  () => clearFieldError(id));
     if (el) el.addEventListener('change', () => clearFieldError(id));
   });
 
   const orderSearch = document.getElementById('orderSearchInput');
   if (orderSearch) {
-    let debounceTimer;
+    let debounce;
     orderSearch.addEventListener('input', () => {
-      clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(() => renderAdminOrders(orderSearch.value), 300);
+      clearTimeout(debounce);
+      debounce = setTimeout(() => renderAdminOrders(orderSearch.value), 300);
     });
   }
+
+  document.getElementById('testEmailBtn')?.addEventListener('click', async () => {
+    const btn = document.getElementById('testEmailBtn');
+    btn.disabled = true;
+    btn.textContent = 'Sending…';
+    try {
+      const res = await sendTestEmail();
+      if (res.success) showToast('Test email sent! Check your inbox.');
+      else showToast('Email failed: ' + (res.error || 'unknown error'), 'error');
+    } catch (err) {
+      showToast(err.message || 'Failed to send test email.', 'error');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Send Test Email';
+    }
+  });
+
+  document.getElementById('refreshEmailLogsBtn')?.addEventListener('click', () => renderEmailLogs());
 }
 
 /* ─── Page init ───────────────────────── */

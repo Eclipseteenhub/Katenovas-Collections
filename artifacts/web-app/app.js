@@ -379,13 +379,16 @@ async function initCheckoutPage() {
   form.addEventListener('submit', async e => {
     e.preventDefault();
 
-    const name    = document.getElementById('customerName').value.trim();
-    const phone   = document.getElementById('customerPhone').value.trim();
-    const email   = document.getElementById('customerEmail').value.trim();
-    const address = document.getElementById('customerAddress').value.trim();
+    const name     = document.getElementById('customerName').value.trim();
+    const phone    = document.getElementById('customerPhone').value.trim();
+    const email    = document.getElementById('customerEmail').value.trim();
+    const address  = document.getElementById('customerAddress').value.trim();
+    const state    = (document.getElementById('customerState')?.value || '').trim();
+    const city     = (document.getElementById('customerCity')?.value || '').trim();
+    const landmark = (document.getElementById('customerLandmark')?.value || '').trim();
 
     if (!name || !phone || !email || !address) {
-      showToast('Please fill in all fields.');
+      showToast('Please fill in your name, phone, email, and address.');
       return;
     }
 
@@ -398,7 +401,7 @@ async function initCheckoutPage() {
         method: 'POST',
         body: JSON.stringify({
           items: lineItems.map(({ product, qty }) => ({ id: product.id, qty })),
-          customer: { name, phone, email, address },
+          customer: { name, phone, email, address, state, city, landmark },
           callbackUrl
         })
       });
@@ -406,7 +409,7 @@ async function initCheckoutPage() {
     } catch (err) {
       showToast(err.message || 'Could not start payment. Please try again.');
       payBtn.disabled    = false;
-      payBtn.textContent = 'Pay with Paystack';
+      payBtn.textContent = 'Pay Securely with Paystack';
     }
   });
 }
@@ -453,6 +456,143 @@ async function initOrderSuccessPage() {
   }
 }
 
+/* ─── AI Chat Widget ──────────────────── */
+
+function initChatWidget() {
+  // Don't show on admin pages
+  if (window.location.pathname.includes('admin')) return;
+
+  const WA_URL = 'https://wa.me/2348025497647';
+  let messages = [];
+  let isOpen   = false;
+
+  // Build DOM
+  const widget = document.createElement('div');
+  widget.id = 'kcChat';
+  widget.innerHTML = `
+    <button id="kcChatBtn" class="kc-chat-btn" aria-label="Chat with us">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      <span class="kc-chat-badge hidden">1</span>
+    </button>
+    <div id="kcChatPanel" class="kc-chat-panel hidden">
+      <div class="kc-chat-header">
+        <div class="kc-chat-header-info">
+          <div class="kc-chat-avatar">K</div>
+          <div>
+            <strong>Kena</strong>
+            <p>Katenovas Assistant &bull; 24/7</p>
+          </div>
+        </div>
+        <div class="kc-chat-header-actions">
+          <a href="${WA_URL}" target="_blank" class="kc-wa-btn" title="Chat on WhatsApp">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg>
+          </a>
+          <button id="kcChatClose" class="kc-chat-close">&times;</button>
+        </div>
+      </div>
+      <div id="kcChatMessages" class="kc-chat-messages"></div>
+      <div class="kc-chat-input-row">
+        <input id="kcChatInput" type="text" placeholder="Ask about products, delivery…" maxlength="500" autocomplete="off" />
+        <button id="kcChatSend" class="kc-chat-send">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(widget);
+
+  const btn      = document.getElementById('kcChatBtn');
+  const panel    = document.getElementById('kcChatPanel');
+  const closeBtn = document.getElementById('kcChatClose');
+  const input    = document.getElementById('kcChatInput');
+  const sendBtn  = document.getElementById('kcChatSend');
+  const msgsEl   = document.getElementById('kcChatMessages');
+  const badge    = widget.querySelector('.kc-chat-badge');
+
+  function renderMessages() {
+    msgsEl.innerHTML = messages.map(m => `
+      <div class="kc-msg kc-msg-${m.role}">
+        <div class="kc-msg-bubble">${m.content.replace(/\n/g, '<br>')}</div>
+      </div>
+    `).join('');
+    msgsEl.scrollTop = msgsEl.scrollHeight;
+  }
+
+  function addMsg(role, content) {
+    messages.push({ role, content });
+    renderMessages();
+  }
+
+  function openPanel() {
+    isOpen = true;
+    panel.classList.remove('hidden');
+    btn.classList.add('active');
+    badge.classList.add('hidden');
+    if (messages.length === 0) {
+      addMsg('assistant', 'Hi! 👋 I\'m Kena, your Katenovas shopping assistant.\n\nI can help you find products, answer questions about delivery, payment, and more. What can I help you with today?');
+    }
+    setTimeout(() => input.focus(), 150);
+  }
+
+  function closePanel() {
+    isOpen = false;
+    panel.classList.add('hidden');
+    btn.classList.remove('active');
+  }
+
+  btn.addEventListener('click', () => isOpen ? closePanel() : openPanel());
+  closeBtn.addEventListener('click', closePanel);
+
+  async function sendMessage() {
+    const text = input.value.trim();
+    if (!text) return;
+    input.value = '';
+    addMsg('user', text);
+
+    // Typing indicator
+    const typingId = 'kc-typing-' + Date.now();
+    msgsEl.innerHTML += `<div id="${typingId}" class="kc-msg kc-msg-assistant"><div class="kc-msg-bubble kc-typing"><span></span><span></span><span></span></div></div>`;
+    msgsEl.scrollTop = msgsEl.scrollHeight;
+    sendBtn.disabled = true;
+    input.disabled   = true;
+
+    try {
+      const res  = await fetch(KC.API_BASE + '/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: messages.slice(-10).map(m => ({ role: m.role, content: m.content }))
+        })
+      });
+      const data = await res.json();
+
+      document.getElementById(typingId)?.remove();
+      addMsg('assistant', data.reply || 'Sorry, I couldn\'t get a response. Please try again!');
+
+      if (data.handoff) {
+        setTimeout(() => { window.open(WA_URL, '_blank'); }, 800);
+      }
+    } catch {
+      document.getElementById(typingId)?.remove();
+      addMsg('assistant', 'I\'m having trouble connecting right now. Please WhatsApp us at +234 802 549 7647 for help!');
+    } finally {
+      sendBtn.disabled = false;
+      input.disabled   = false;
+      input.focus();
+    }
+  }
+
+  sendBtn.addEventListener('click', sendMessage);
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+  });
+
+  // Show badge after 8 seconds if not opened
+  setTimeout(() => {
+    if (!isOpen) badge.classList.remove('hidden');
+  }, 8000);
+}
+
 /* ─── Page init ───────────────────────── */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -464,4 +604,7 @@ document.addEventListener('DOMContentLoaded', () => {
   else if (path.includes('cart')) { initCartPage(); }
   else if (path.includes('checkout')) { initCheckoutPage(); }
   else if (path.includes('order-success')) { initOrderSuccessPage(); }
+
+  // Chat widget — on all customer pages
+  initChatWidget();
 });

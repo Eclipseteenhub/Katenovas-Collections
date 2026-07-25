@@ -1,10 +1,15 @@
 import { Router, type IRouter } from "express";
-import { db, ordersTable, orderStatusValues } from "@workspace/db";
+import { db, ordersTable, orderStatusValues, emailLogsTable } from "@workspace/db";
 import { desc, eq, or, ilike } from "drizzle-orm";
 import { z } from "zod";
 import { requireAdmin } from "../middleware/requireAdmin";
+import * as emailService from "../services/email";
 
 const router: IRouter = Router();
+
+function generateId(prefix: string) {
+  return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+}
 
 function serialize(o: typeof ordersTable.$inferSelect) {
   return {
@@ -13,19 +18,25 @@ function serialize(o: typeof ordersTable.$inferSelect) {
     customerPhone: o.customerPhone,
     customerEmail: o.customerEmail,
     customerAddress: o.customerAddress,
+    customerState: o.customerState,
+    customerCity: o.customerCity,
+    customerLandmark: o.customerLandmark,
     items: o.items,
     totalAmount: parseFloat(o.totalAmount),
     paystackReference: o.paystackReference,
     paymentStatus: o.paymentStatus,
     orderStatus: o.orderStatus,
+    sellerNotes: o.sellerNotes,
     createdAt: o.createdAt,
+    updatedAt: o.updatedAt,
   };
 }
 
 // GET /api/orders?search=
 router.get("/orders", requireAdmin, async (req, res) => {
   try {
-    const search = typeof req.query.search === "string" ? req.query.search.trim() : "";
+    const search =
+      typeof req.query.search === "string" ? req.query.search.trim() : "";
 
     const rows = await db
       .select()
@@ -36,6 +47,7 @@ router.get("/orders", requireAdmin, async (req, res) => {
               ilike(ordersTable.customerName, `%${search}%`),
               ilike(ordersTable.customerPhone, `%${search}%`),
               ilike(ordersTable.paystackReference, `%${search}%`),
+              ilike(ordersTable.customerEmail, `%${search}%`),
             )
           : undefined,
       )
@@ -48,22 +60,31 @@ router.get("/orders", requireAdmin, async (req, res) => {
   }
 });
 
-const updateStatusSchema = z.object({
-  orderStatus: z.enum(orderStatusValues),
+const updateOrderSchema = z.object({
+  orderStatus: z.enum(orderStatusValues).optional(),
+  sellerNotes: z.string().max(2000).optional(),
 });
 
 // PATCH /api/orders/:id
 router.patch("/orders/:id", requireAdmin, async (req, res) => {
-  const parsed = updateStatusSchema.safeParse(req.body);
+  const parsed = updateOrderSchema.safeParse(req.body);
   if (!parsed.success) {
-    res.status(400).json({ error: "Invalid order status" });
+    res.status(400).json({ error: "Invalid update data" });
     return;
   }
+
+  const updates: Partial<typeof ordersTable.$inferInsert> = {
+    updatedAt: new Date(),
+  };
+  if (parsed.data.orderStatus !== undefined)
+    updates.orderStatus = parsed.data.orderStatus;
+  if (parsed.data.sellerNotes !== undefined)
+    updates.sellerNotes = parsed.data.sellerNotes;
 
   try {
     const [row] = await db
       .update(ordersTable)
-      .set({ orderStatus: parsed.data.orderStatus, updatedAt: new Date() })
+      .set(updates)
       .where(eq(ordersTable.id, String(req.params.id)))
       .returning();
 
@@ -71,6 +92,40 @@ router.patch("/orders/:id", requireAdmin, async (req, res) => {
       res.status(404).json({ error: "Order not found" });
       return;
     }
+
+    // Send status update email asynchronously (only if status changed)
+    if (parsed.data.orderStatus && row.paymentStatus === "success") {
+      const orderData: emailService.OrderForEmail = {
+        id: row.id,
+        customerName: row.customerName,
+        customerEmail: row.customerEmail,
+        customerPhone: row.customerPhone,
+        customerAddress: row.customerAddress,
+        items: row.items as emailService.OrderForEmail["items"],
+        totalAmount: parseFloat(row.totalAmount),
+        paystackReference: row.paystackReference,
+        orderStatus: row.orderStatus,
+      };
+
+      emailService
+        .sendStatusUpdate(orderData, parsed.data.orderStatus)
+        .then((r) =>
+          db
+            .insert(emailLogsTable)
+            .values({
+              id: generateId("el"),
+              recipient: row.customerEmail,
+              subject: `Order Update: ${parsed.data.orderStatus}`,
+              emailType: "status_update",
+              status: r.success ? "sent" : "failed",
+              errorMessage: r.error ?? "",
+              relatedOrderId: row.id,
+            })
+            .catch(() => {}),
+        )
+        .catch(() => {});
+    }
+
     res.json(serialize(row));
   } catch (err) {
     req.log.error(err);

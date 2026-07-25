@@ -26,8 +26,10 @@
         <div class="admin-tabs">
           <button class="admin-tab-btn active" data-tab="products">Products</button>
           <button class="admin-tab-btn" data-tab="orders">Orders</button>
+          <button class="admin-tab-btn" data-tab="email-logs">Email Logs</button>
         </div>
 
+        <!-- Products Tab -->
         <div class="admin-tab-panel" data-tab-panel="products">
           <div class="admin-toolbar">
             <div class="admin-stats">
@@ -51,20 +53,34 @@
           <p id="noProducts" class="empty-message hidden">No products yet. Add your first product above.</p>
         </div>
 
+        <!-- Orders Tab -->
         <div class="admin-tab-panel hidden" data-tab-panel="orders">
           <div class="admin-orders-toolbar">
-            <input type="text" id="orderSearchInput" class="search-input" placeholder="Search by customer name, phone, or reference..." />
+            <input type="text" id="orderSearchInput" class="search-input" placeholder="Search by customer, phone, email, or reference..." />
           </div>
 
           <div id="adminOrdersList" class="admin-orders-list"></div>
           <p id="noOrders" class="empty-message hidden">No orders yet.</p>
         </div>
 
+        <!-- Email Logs Tab -->
+        <div class="admin-tab-panel hidden" data-tab-panel="email-logs">
+          <div class="admin-orders-toolbar" style="display:flex;align-items:center;gap:12px;">
+            <h2 style="margin:0;font-size:1.1rem;color:var(--crimson)">Email Activity Log</h2>
+            <button id="testEmailBtn" class="btn btn-outline btn-sm">Send Test Email</button>
+            <button id="refreshEmailLogsBtn" class="btn btn-outline btn-sm" style="margin-left:auto">Refresh</button>
+          </div>
+          <p class="field-hint" style="margin-bottom:12px;">All automated emails sent to customers and to you appear here.</p>
+          <div id="adminEmailLogsList" class="admin-email-logs-list"></div>
+          <p id="noEmailLogs" class="empty-message hidden">No emails sent yet.</p>
+        </div>
+
       </div>
     </main>
 
+    <!-- Product Modal -->
     <div id="productModal" class="modal-overlay hidden">
-      <div class="modal">
+      <div class="modal modal-wide">
         <div class="modal-header">
           <h2 id="modalTitle">Add Product</h2>
           <button id="closeModal" class="modal-close" aria-label="Close">&times;</button>
@@ -98,7 +114,33 @@
 
           <div class="form-group">
             <label for="productDescription">Description</label>
-            <textarea id="productDescription" rows="3" placeholder="Describe the product..."></textarea>
+            <textarea id="productDescription" rows="2" placeholder="Describe the product..."></textarea>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="productColors">Available Colors</label>
+              <input type="text" id="productColors" placeholder="e.g. Red, Black, Gold" />
+              <p class="field-hint">Separate colors with a comma</p>
+            </div>
+            <div class="form-group">
+              <label for="productSizes">Available Sizes</label>
+              <input type="text" id="productSizes" placeholder="e.g. S, M, L, XL" />
+              <p class="field-hint">Separate sizes with a comma</p>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="productStockCount">Stock Count</label>
+              <input type="number" id="productStockCount" placeholder="e.g. 10" min="0" value="0" />
+            </div>
+            <div class="form-group" style="display:flex;align-items:flex-end;padding-bottom:4px;">
+              <label class="toggle-label">
+                <input type="checkbox" id="productInStock" checked />
+                <span class="toggle-text">Available in stock</span>
+              </label>
+            </div>
           </div>
 
           <div class="form-group">
@@ -114,13 +156,6 @@
             <input type="hidden" id="productImageData" />
           </div>
 
-          <div class="form-group">
-            <label class="toggle-label">
-              <input type="checkbox" id="productInStock" checked />
-              <span class="toggle-text">Available in stock</span>
-            </label>
-          </div>
-
           <div class="form-actions">
             <button type="button" id="cancelModal" class="btn btn-outline">Cancel</button>
             <button type="submit" id="saveProductBtn" class="btn btn-gold">Save Product</button>
@@ -129,6 +164,7 @@
       </div>
     </div>
 
+    <!-- Delete Confirm Modal -->
     <div id="confirmModal" class="modal-overlay hidden">
       <div class="modal modal-sm">
         <h3>Delete Product?</h3>
@@ -136,6 +172,25 @@
         <div class="form-actions">
           <button id="cancelDelete" class="btn btn-outline">Cancel</button>
           <button id="confirmDelete" class="btn btn-danger">Delete</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Order Notes Modal -->
+    <div id="notesModal" class="modal-overlay hidden">
+      <div class="modal modal-sm">
+        <div class="modal-header">
+          <h2>Seller Notes</h2>
+          <button id="closeNotesModal" class="modal-close">&times;</button>
+        </div>
+        <div class="form-group">
+          <label for="notesTextarea">Private notes (customers cannot see these)</label>
+          <textarea id="notesTextarea" rows="5" placeholder="e.g. Customer requested gift wrapping..."></textarea>
+        </div>
+        <input type="hidden" id="notesOrderId" />
+        <div class="form-actions">
+          <button id="cancelNotes" class="btn btn-outline">Cancel</button>
+          <button id="saveNotes" class="btn btn-gold">Save Notes</button>
         </div>
       </div>
     </div>

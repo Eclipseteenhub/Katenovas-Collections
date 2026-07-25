@@ -1,13 +1,11 @@
 import { Router } from "express";
 import { db, productsTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import { z } from "zod";
-import { desc } from "drizzle-orm";
 import { requireAdmin } from "../middleware/requireAdmin";
 
 const router = Router();
 
-// Serialize a DB product row to the shape the frontend expects
 function serialize(p: typeof productsTable.$inferSelect) {
   return {
     id: p.id,
@@ -16,20 +14,33 @@ function serialize(p: typeof productsTable.$inferSelect) {
     description: p.description,
     category: p.category,
     image: p.image,
+    video: p.video,
     inStock: p.inStock,
+    stockCount: p.stockCount,
+    colors: p.colors ? p.colors.split(",").map((c) => c.trim()).filter(Boolean) : [],
+    sizes: p.sizes ? p.sizes.split(",").map((s) => s.trim()).filter(Boolean) : [],
     createdAt: p.createdAt,
   };
 }
 
-// Validation schema for create / update body
 const productBodySchema = z.object({
   name: z.string().min(1),
   price: z.number().nonnegative(),
   description: z.string().optional().default(""),
   category: z.string().min(1),
   image: z.string().optional().default(""),
+  video: z.string().optional().default(""),
   inStock: z.boolean().optional().default(true),
+  stockCount: z.number().int().nonnegative().optional().default(0),
+  colors: z.union([z.string(), z.array(z.string())]).optional().default(""),
+  sizes: z.union([z.string(), z.array(z.string())]).optional().default(""),
 });
+
+function normalizeList(v: string | string[] | undefined): string {
+  if (!v) return "";
+  if (Array.isArray(v)) return v.filter(Boolean).join(",");
+  return v;
+}
 
 // GET /api/products
 router.get("/products", async (req, res) => {
@@ -53,13 +64,25 @@ router.post("/products", requireAdmin, async (req, res) => {
     return;
   }
 
-  const { name, price, description, category, image, inStock } = parsed.data;
+  const d = parsed.data;
   const id = "p_" + Date.now() + "_" + Math.random().toString(36).slice(2, 7);
 
   try {
     const [row] = await db
       .insert(productsTable)
-      .values({ id, name, price: price.toString(), description, category, image, inStock })
+      .values({
+        id,
+        name: d.name,
+        price: d.price.toString(),
+        description: d.description,
+        category: d.category,
+        image: d.image,
+        video: d.video,
+        inStock: d.inStock,
+        stockCount: d.stockCount,
+        colors: normalizeList(d.colors),
+        sizes: normalizeList(d.sizes),
+      })
       .returning();
     res.status(201).json(serialize(row));
   } catch (err) {
@@ -83,7 +106,11 @@ router.put("/products/:id", requireAdmin, async (req, res) => {
   if (d.description !== undefined) updates.description = d.description;
   if (d.category !== undefined) updates.category = d.category;
   if (d.image !== undefined) updates.image = d.image;
+  if (d.video !== undefined) updates.video = d.video;
   if (d.inStock !== undefined) updates.inStock = d.inStock;
+  if (d.stockCount !== undefined) updates.stockCount = d.stockCount;
+  if (d.colors !== undefined) updates.colors = normalizeList(d.colors);
+  if (d.sizes !== undefined) updates.sizes = normalizeList(d.sizes);
 
   try {
     const [row] = await db

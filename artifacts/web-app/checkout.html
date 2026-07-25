@@ -56,10 +56,24 @@
               </div>
               <div class="form-group">
                 <label for="customerAddress">Delivery Address <span class="required">*</span></label>
-                <textarea id="customerAddress" rows="3" placeholder="Street, city, state" required></textarea>
+                <textarea id="customerAddress" rows="2" placeholder="House number, street name" required></textarea>
               </div>
-              <button type="submit" id="payBtn" class="btn btn-gold btn-full">Pay with Paystack</button>
-              <p class="checkout-note">You'll be redirected to Paystack's secure page to complete your payment. Test mode is currently active.</p>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="customerState">State</label>
+                  <input type="text" id="customerState" placeholder="e.g. Lagos" />
+                </div>
+                <div class="form-group">
+                  <label for="customerCity">City / LGA</label>
+                  <input type="text" id="customerCity" placeholder="e.g. Ikeja" />
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="customerLandmark">Nearest Landmark <span style="color:#888;font-weight:400">(optional)</span></label>
+                <input type="text" id="customerLandmark" placeholder="e.g. Beside First Bank, After the roundabout" />
+              </div>
+              <button type="submit" id="payBtn" class="btn btn-gold btn-full">Pay Securely with Paystack</button>
+              <p class="checkout-note">🔒 Payments are secured by Paystack. We accept cards, bank transfer, and USSD.</p>
             </form>
           </div>
 

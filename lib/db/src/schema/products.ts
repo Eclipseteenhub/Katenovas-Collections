@@ -3,6 +3,7 @@ import {
   text,
   numeric,
   boolean,
+  integer,
   timestamp,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
@@ -15,7 +16,11 @@ export const productsTable = pgTable("products", {
   description: text("description").default("").notNull(),
   category: text("category").notNull(),
   image: text("image").default("").notNull(),
+  video: text("video").default("").notNull(),
   inStock: boolean("in_stock").default(true).notNull(),
+  stockCount: integer("stock_count").default(0).notNull(),
+  colors: text("colors").default("").notNull(),
+  sizes: text("sizes").default("").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

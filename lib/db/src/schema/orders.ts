@@ -21,11 +21,15 @@ export const ordersTable = pgTable("orders", {
   customerPhone: text("customer_phone").notNull(),
   customerEmail: text("customer_email").notNull(),
   customerAddress: text("customer_address").notNull(),
+  customerState: text("customer_state").default("").notNull(),
+  customerCity: text("customer_city").default("").notNull(),
+  customerLandmark: text("customer_landmark").default("").notNull(),
   items: jsonb("items").$type<z.infer<typeof orderItemSchema>[]>().notNull(),
   totalAmount: numeric("total_amount", { precision: 12, scale: 2 }).notNull(),
   paystackReference: text("paystack_reference").notNull().unique(),
   paymentStatus: text("payment_status").notNull().default("pending"),
   orderStatus: text("order_status").notNull().default("Pending"),
+  sellerNotes: text("seller_notes").default("").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -41,7 +45,9 @@ export type Order = typeof ordersTable.$inferSelect;
 export const orderStatusValues = [
   "Pending",
   "Processing",
+  "Ready for Dispatch",
   "Shipped",
+  "Out for Delivery",
   "Delivered",
   "Cancelled",
 ] as const;
