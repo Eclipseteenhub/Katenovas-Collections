@@ -1,9 +1,11 @@
 'use strict';
 
+
 /* ═══════════════════════════════════════
    KATENOVAS COLLECTIONS — app.js
    Customer-facing pages
    ═══════════════════════════════════════ */
+
 
 const KC = {
   WA_NUMBER: '2348025497647',
@@ -11,7 +13,9 @@ const KC = {
   CART_KEY:  'kc_cart'
 };
 
+
 /* ─── API helpers ─────────────────────── */
+
 
 async function apiFetch(path, options) {
   const res = await fetch(KC.API_BASE + path, {
@@ -25,6 +29,7 @@ async function apiFetch(path, options) {
   return res.json();
 }
 
+
 async function fetchProducts() {
   try {
     return await apiFetch('/products');
@@ -33,21 +38,26 @@ async function fetchProducts() {
   }
 }
 
+
 /* ─── Cart (stays in localStorage) ───── */
+
 
 function getCart() {
   try { return JSON.parse(localStorage.getItem(KC.CART_KEY)) || []; }
   catch { return []; }
 }
 
+
 function saveCart(cart) {
   localStorage.setItem(KC.CART_KEY, JSON.stringify(cart));
   updateCartBadge();
 }
 
+
 function getCartCount() {
   return getCart().reduce((s, i) => s + i.qty, 0);
 }
+
 
 function getCartTotal(products) {
   return getCart().reduce((sum, item) => {
@@ -56,12 +66,15 @@ function getCartTotal(products) {
   }, 0);
 }
 
+
 /* ─── Cart operations ─────────────────── */
+
 
 async function addToCart(productId) {
   const products = await fetchProducts();
   const product  = products.find(p => p.id === productId);
   if (!product || !product.inStock) return;
+
 
   const cart     = getCart();
   const existing = cart.find(i => i.id === productId);
@@ -69,6 +82,7 @@ async function addToCart(productId) {
   saveCart(cart);
   showToast('\u2714 ' + product.name + ' added to cart!');
 }
+
 
 function updateCartQty(productId, delta) {
   const cart = getCart();
@@ -79,16 +93,20 @@ function updateCartQty(productId, delta) {
   initCartPage();
 }
 
+
 function removeFromCart(productId) {
   saveCart(getCart().filter(i => i.id !== productId));
   initCartPage();
 }
 
+
 /* ─── Format helpers ──────────────────── */
+
 
 function formatPrice(n) {
   return '\u20a6' + Number(n).toLocaleString('en-NG');
 }
+
 
 function escHtml(str) {
   return String(str)
@@ -96,7 +114,9 @@ function escHtml(str) {
     .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
+
 /* ─── Cart badge ──────────────────────── */
+
 
 function updateCartBadge() {
   const count = getCartCount();
@@ -105,7 +125,9 @@ function updateCartBadge() {
   });
 }
 
+
 /* ─── Toast ───────────────────────────── */
+
 
 function showToast(msg) {
   const toast = document.getElementById('toast');
@@ -116,7 +138,9 @@ function showToast(msg) {
   toast._timer = setTimeout(() => toast.classList.add('hidden'), 2800);
 }
 
+
 /* ─── Nav hamburger ───────────────────── */
+
 
 function initNav() {
   const toggle = document.getElementById('navToggle');
@@ -130,14 +154,18 @@ function initNav() {
   });
 }
 
+
 /* ─── Render: Products page ───────────── */
+
 
 function renderProducts(products, category, query) {
   const grid  = document.getElementById('productsGrid');
   const empty = document.getElementById('emptyMessage');
   if (!grid) return;
 
+
   let list = products;
+
 
   if (category && category !== 'All') {
     list = list.filter(p => p.category === category);
@@ -151,11 +179,13 @@ function renderProducts(products, category, query) {
     );
   }
 
+
   if (list.length === 0) {
     grid.innerHTML = '';
     if (empty) empty.classList.remove('hidden');
     return;
   }
+
 
   if (empty) empty.classList.add('hidden');
   grid.innerHTML = list.map(p => `
@@ -185,13 +215,16 @@ function renderProducts(products, category, query) {
     </div>
   `).join('');
 
+
   // Attach add-to-cart via event delegation (works in module scope)
   grid.querySelectorAll('.add-to-cart-btn').forEach(btn => {
     btn.addEventListener('click', () => addToCart(btn.dataset.id));
   });
 }
 
+
 /* ─── Render: Cart page ───────────────── */
+
 
 async function renderCart() {
   const cartItemsEl = document.getElementById('cartItems');
@@ -201,8 +234,10 @@ async function renderCart() {
   const totalEl     = document.getElementById('cartTotal');
   if (!cartItemsEl) return;
 
+
   const cart     = getCart();
   const products = await fetchProducts();
+
 
   if (cart.length === 0) {
     cartItemsEl.innerHTML = '';
@@ -212,8 +247,10 @@ async function renderCart() {
     return;
   }
 
+
   if (emptyCart)   emptyCart.classList.add('hidden');
   if (cartSummary) cartSummary.classList.remove('hidden');
+
 
   cartItemsEl.innerHTML = cart.map(item => {
     const p = products.find(pr => pr.id === item.id);
@@ -245,6 +282,7 @@ async function renderCart() {
     `;
   }).join('');
 
+
   // Attach cart controls via event delegation
   cartItemsEl.querySelectorAll('.qty-btn').forEach(btn => {
     btn.addEventListener('click', () => updateCartQty(btn.dataset.id, parseInt(btn.dataset.delta)));
@@ -253,24 +291,29 @@ async function renderCart() {
     btn.addEventListener('click', () => removeFromCart(btn.dataset.id));
   });
 
+
   const total = getCartTotal(products);
   if (subtotalEl) subtotalEl.textContent = formatPrice(total);
   if (totalEl)    totalEl.textContent    = formatPrice(total);
   updateCartBadge();
 }
 
+
 /* ─── WhatsApp checkout ───────────────── */
+
 
 async function sendWhatsAppOrder() {
   const cart     = getCart();
   const products = await fetchProducts();
   if (cart.length === 0) return;
 
+
   const lines = cart.map(item => {
     const p = products.find(pr => pr.id === item.id);
     if (!p) return null;
     return `\u2022 ${p.name} x${item.qty} \u2014 ${formatPrice(p.price * item.qty)}`;
   }).filter(Boolean);
+
 
   const total   = getCartTotal(products);
   const message = [
@@ -285,17 +328,22 @@ async function sendWhatsAppOrder() {
     'Please confirm availability and delivery details. Thank you!'
   ].join('\n');
 
+
   window.open(`https://wa.me/${KC.WA_NUMBER}?text=${encodeURIComponent(message)}`, '_blank');
 }
 
+
 /* ─── Init: Products page ─────────────── */
+
 
 async function initProductsPage() {
   const searchInput = document.getElementById('searchInput');
   const filterBtns  = document.querySelectorAll('.filter-btn');
 
+
   let activeCategory = 'All';
   let searchQuery    = '';
+
 
   const params = new URLSearchParams(window.location.search);
   const urlCat = params.get('category');
@@ -306,8 +354,10 @@ async function initProductsPage() {
     });
   }
 
+
   const products = await fetchProducts();
   renderProducts(products, activeCategory, searchQuery);
+
 
   if (searchInput) {
     searchInput.addEventListener('input', () => {
@@ -315,6 +365,7 @@ async function initProductsPage() {
       renderProducts(products, activeCategory, searchQuery);
     });
   }
+
 
   filterBtns.forEach(btn => {
     btn.addEventListener('click', () => {
@@ -326,7 +377,9 @@ async function initProductsPage() {
   });
 }
 
+
 /* ─── Init: Cart page ─────────────────── */
+
 
 async function initCartPage() {
   await renderCart();
@@ -338,33 +391,34 @@ async function initCartPage() {
   }
 }
 
+
 /* ─── Init: Checkout page ─────────────── */
+
 
 async function initCheckoutPage() {
   const layout = document.getElementById('checkoutLayout');
-  const empty  = document.getElementById('checkoutEmpty');
+  const empty = document.getElementById('checkoutEmpty');
   const summaryItemsEl = document.getElementById('checkoutSummaryItems');
   const totalEl = document.getElementById('checkoutTotal');
-  const form    = document.getElementById('checkoutForm');
-  const payBtn  = document.getElementById('payBtn');
-  if (!layout || !form) return;
+  const form = document.getElementById('checkoutForm');
+  const payBtn = document.getElementById('payBtn');
+  if (!layout || !form || !summaryItemsEl || !totalEl || !payBtn) return;
 
-  const cart     = getCart();
+  const cart = getCart();
   const products = await fetchProducts();
-
-  if (cart.length === 0) {
-    layout.classList.add('hidden');
-    if (empty) empty.classList.remove('hidden');
-    return;
-  }
-
   const lineItems = cart
     .map(item => {
-      const p = products.find(pr => pr.id === item.id);
-      if (!p) return null;
-      return { product: p, qty: item.qty };
+      const product = products.find(row => row.id === item.id);
+      return product ? { product, qty: item.qty } : null;
     })
     .filter(Boolean);
+
+  if (cart.length === 0 || lineItems.length !== cart.length) {
+    layout.classList.add('hidden');
+    if (empty) empty.classList.remove('hidden');
+    showToast('Your cart changed. Please return to your cart and try again.');
+    return;
+  }
 
   summaryItemsEl.innerHTML = lineItems.map(({ product, qty }) => `
     <div class="checkout-summary-row">
@@ -372,99 +426,108 @@ async function initCheckoutPage() {
       <span>${formatPrice(product.price * qty)}</span>
     </div>
   `).join('');
+  totalEl.textContent = formatPrice(getCartTotal(products));
 
-  const total = getCartTotal(products);
-  totalEl.textContent = formatPrice(total);
-
-  form.addEventListener('submit', async e => {
-    e.preventDefault();
-
-    const name     = document.getElementById('customerName').value.trim();
-    const phone    = document.getElementById('customerPhone').value.trim();
-    const email    = document.getElementById('customerEmail').value.trim();
-    const address  = document.getElementById('customerAddress').value.trim();
-    const state    = (document.getElementById('customerState')?.value || '').trim();
-    const city     = (document.getElementById('customerCity')?.value || '').trim();
-    const landmark = (document.getElementById('customerLandmark')?.value || '').trim();
-
-    if (!name || !phone || !email || !address) {
+  form.addEventListener('submit', async event => {
+    event.preventDefault();
+    const customer = {
+      name: document.getElementById('customerName').value.trim(),
+      phone: document.getElementById('customerPhone').value.trim(),
+      email: document.getElementById('customerEmail').value.trim(),
+      address: document.getElementById('customerAddress').value.trim(),
+      state: (document.getElementById('customerState')?.value || '').trim(),
+      city: (document.getElementById('customerCity')?.value || '').trim(),
+      landmark: (document.getElementById('customerLandmark')?.value || '').trim()
+    };
+    if (!customer.name || !customer.phone || !customer.email || !customer.address) {
       showToast('Please fill in your name, phone, email, and address.');
       return;
     }
 
-    payBtn.disabled    = true;
-    payBtn.textContent = 'Redirecting to Paystack\u2026';
-
+    payBtn.disabled = true;
+    payBtn.textContent = 'Checking stock and redirecting to Paystack…';
     try {
-      const callbackUrl = window.location.origin + window.location.pathname.replace(/checkout\.html$/, 'order-success.html');
+      // The server rereads product prices and inventory; the browser only sends IDs and quantities.
       const data = await apiFetch('/checkout/initialize', {
         method: 'POST',
         body: JSON.stringify({
           items: lineItems.map(({ product, qty }) => ({ id: product.id, qty })),
-          customer: { name, phone, email, address, state, city, landmark },
-          callbackUrl
+          customer
         })
       });
-      window.location.href = data.authorizationUrl;
-    } catch (err) {
-      showToast(err.message || 'Could not start payment. Please try again.');
-      payBtn.disabled    = false;
+      window.location.assign(data.authorizationUrl);
+    } catch (error) {
+      showToast(error.message || 'Could not start payment. Please try again.');
+      payBtn.disabled = false;
       payBtn.textContent = 'Pay Securely with Paystack';
     }
   });
 }
 
+
 /* ─── Init: Order success page ────────── */
 
+
 async function initOrderSuccessPage() {
-  const box     = document.getElementById('orderStatusBox');
+  const box = document.getElementById('orderStatusBox');
   const titleEl = document.getElementById('orderStatusTitle');
-  const msgEl   = document.getElementById('orderStatusMessage');
-  if (!box) return;
+  const msgEl = document.getElementById('orderStatusMessage');
+  if (!box || !titleEl || !msgEl) return;
 
-  const params    = new URLSearchParams(window.location.search);
+  const params = new URLSearchParams(window.location.search);
   const reference = params.get('reference') || params.get('trxref');
-
   if (!reference) {
     box.classList.add('failed');
-    box.querySelector('.order-status-icon').textContent = '\u2716';
+    box.querySelector('.order-status-icon').textContent = '✖';
     titleEl.textContent = 'No payment reference found';
-    msgEl.textContent   = 'We could not find a payment reference in this link. If you completed a payment, please contact us on WhatsApp.';
+    msgEl.textContent = 'We could not find a payment reference in this link. If you completed payment, please contact us on WhatsApp.';
     return;
   }
 
   try {
     const data = await apiFetch('/checkout/verify/' + encodeURIComponent(reference));
-
+    const publicReference = data.order?.reference || reference;
     if (data.status === 'success') {
       saveCart([]);
       box.classList.add('success');
-      box.querySelector('.order-status-icon').textContent = '\u2705';
-      titleEl.textContent = 'Payment Successful!';
-      msgEl.innerHTML = `Thank you, ${escHtml(data.order.customerName)}! Your order has been received and is being processed.<br><span class="order-ref">Ref: ${escHtml(reference)}</span><br>We'll reach out on WhatsApp/phone with delivery updates.`;
+      box.querySelector('.order-status-icon').textContent = '✅';
+      titleEl.textContent = data.requiresSupport
+        ? 'Payment Received — We Need to Confirm Stock'
+        : 'Payment Successful!';
+      msgEl.textContent = data.requiresSupport
+        ? 'Your payment was received. Please contact us on WhatsApp with reference: ' + publicReference + '.'
+        : 'Your order has been received and is being processed. Reference: ' + publicReference + '. We will reach out with delivery updates.';
+    } else if (data.status === 'pending') {
+      box.querySelector('.order-status-icon').textContent = '⏳';
+      titleEl.textContent = 'Confirming Payment';
+      msgEl.textContent = 'We are still confirming your payment. Please refresh shortly. Reference: ' + publicReference + '.';
     } else {
       box.classList.add('failed');
-      box.querySelector('.order-status-icon').textContent = '\u2716';
+      box.querySelector('.order-status-icon').textContent = '✖';
       titleEl.textContent = 'Payment Not Successful';
-      msgEl.innerHTML = `Your payment could not be confirmed.<br><span class="order-ref">Ref: ${escHtml(reference)}</span><br>No charge was completed. Please try again or contact us on WhatsApp for help.`;
+      msgEl.textContent = 'Your payment could not be confirmed. Reference: ' + publicReference + '. Please try again or contact us on WhatsApp.';
     }
-  } catch (err) {
+  } catch {
     box.classList.add('failed');
-    box.querySelector('.order-status-icon').textContent = '\u2716';
+    box.querySelector('.order-status-icon').textContent = '✖';
     titleEl.textContent = 'Could Not Verify Payment';
-    msgEl.textContent   = 'We could not verify this payment right now. Please contact us on WhatsApp with your order reference.';
+    msgEl.textContent = 'We could not verify this payment right now. Please contact us on WhatsApp with your order reference.';
   }
 }
 
+
 /* ─── AI Chat Widget ──────────────────── */
+
 
 function initChatWidget() {
   // Don't show on admin pages
   if (window.location.pathname.includes('admin')) return;
 
+
   const WA_URL = 'https://wa.me/2348025497647';
   let messages = [];
   let isOpen   = false;
+
 
   // Build DOM
   const widget = document.createElement('div');
@@ -501,6 +564,7 @@ function initChatWidget() {
   `;
   document.body.appendChild(widget);
 
+
   const btn      = document.getElementById('kcChatBtn');
   const panel    = document.getElementById('kcChatPanel');
   const closeBtn = document.getElementById('kcChatClose');
@@ -509,19 +573,29 @@ function initChatWidget() {
   const msgsEl   = document.getElementById('kcChatMessages');
   const badge    = widget.querySelector('.kc-chat-badge');
 
+
   function renderMessages() {
-    msgsEl.innerHTML = messages.map(m => `
-      <div class="kc-msg kc-msg-${m.role}">
-        <div class="kc-msg-bubble">${m.content.replace(/\n/g, '<br>')}</div>
-      </div>
-    `).join('');
+    msgsEl.replaceChildren();
+    for (const message of messages) {
+      const row = document.createElement('div');
+      row.className = 'kc-msg kc-msg-' + (message.role === 'user' ? 'user' : 'assistant');
+      const bubble = document.createElement('div');
+      bubble.className = 'kc-msg-bubble';
+      bubble.style.whiteSpace = 'pre-wrap';
+      // Never turn customer or AI text into HTML.
+      bubble.textContent = String(message.content ?? '');
+      row.appendChild(bubble);
+      msgsEl.appendChild(row);
+    }
     msgsEl.scrollTop = msgsEl.scrollHeight;
   }
+
 
   function addMsg(role, content) {
     messages.push({ role, content });
     renderMessages();
   }
+
 
   function openPanel() {
     isOpen = true;
@@ -534,14 +608,17 @@ function initChatWidget() {
     setTimeout(() => input.focus(), 150);
   }
 
+
   function closePanel() {
     isOpen = false;
     panel.classList.add('hidden');
     btn.classList.remove('active');
   }
 
+
   btn.addEventListener('click', () => isOpen ? closePanel() : openPanel());
   closeBtn.addEventListener('click', closePanel);
+
 
   async function sendMessage() {
     const text = input.value.trim();
@@ -549,12 +626,14 @@ function initChatWidget() {
     input.value = '';
     addMsg('user', text);
 
+
     // Typing indicator
     const typingId = 'kc-typing-' + Date.now();
     msgsEl.innerHTML += `<div id="${typingId}" class="kc-msg kc-msg-assistant"><div class="kc-msg-bubble kc-typing"><span></span><span></span><span></span></div></div>`;
     msgsEl.scrollTop = msgsEl.scrollHeight;
     sendBtn.disabled = true;
     input.disabled   = true;
+
 
     try {
       const res  = await fetch(KC.API_BASE + '/chat', {
@@ -566,8 +645,10 @@ function initChatWidget() {
       });
       const data = await res.json();
 
+
       document.getElementById(typingId)?.remove();
       addMsg('assistant', data.reply || 'Sorry, I couldn\'t get a response. Please try again!');
+
 
       if (data.handoff) {
         setTimeout(() => { window.open(WA_URL, '_blank'); }, 800);
@@ -582,10 +663,12 @@ function initChatWidget() {
     }
   }
 
+
   sendBtn.addEventListener('click', sendMessage);
   input.addEventListener('keydown', e => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
   });
+
 
   // Show badge after 8 seconds if not opened
   setTimeout(() => {
@@ -593,17 +676,21 @@ function initChatWidget() {
   }, 8000);
 }
 
+
 /* ─── Page init ───────────────────────── */
+
 
 document.addEventListener('DOMContentLoaded', () => {
   initNav();
   updateCartBadge();
+
 
   const path = window.location.pathname;
   if (path.includes('products')) { initProductsPage(); }
   else if (path.includes('cart')) { initCartPage(); }
   else if (path.includes('checkout')) { initCheckoutPage(); }
   else if (path.includes('order-success')) { initOrderSuccessPage(); }
+
 
   // Chat widget — on all customer pages
   initChatWidget();
