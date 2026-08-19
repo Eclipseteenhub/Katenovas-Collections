@@ -31,11 +31,7 @@ async function apiFetch(path, options) {
 
 
 async function fetchProducts() {
-  try {
-    return await apiFetch('/products');
-  } catch {
-    return [];
-  }
+  return apiFetch('/products');
 }
 
 
@@ -43,8 +39,36 @@ async function fetchProducts() {
 
 
 function getCart() {
-  try { return JSON.parse(localStorage.getItem(KC.CART_KEY)) || []; }
-  catch { return []; }
+  try {
+    const value = JSON.parse(localStorage.getItem(KC.CART_KEY) || '[]');
+    return Array.isArray(value) ? normalizeCart(value) : [];
+  } catch { return []; }
+}
+
+function normalizeCart(cart, products) {
+  if (!Array.isArray(cart)) return [];
+  const available = products
+    ? new Set(products.filter(p => p && p.inStock && Number(p.stockCount) > 0).map(p => p.id))
+    : null;
+  const merged = new Map();
+  for (const item of cart) {
+    if (!item || typeof item.id !== 'string' || !item.id.trim()) continue;
+    const qty = Number(item.qty);
+    if (!Number.isInteger(qty) || qty <= 0) continue;
+    if (available && !available.has(item.id)) continue;
+    merged.set(item.id, Math.min(999, (merged.get(item.id) || 0) + qty));
+  }
+  return [...merged].map(([id, qty]) => ({ id, qty }));
+}
+
+function reconcileCart(products) {
+  const current = getCart();
+  const usable = normalizeCart(current, products);
+  if (JSON.stringify(current) !== JSON.stringify(usable)) {
+    localStorage.setItem(KC.CART_KEY, JSON.stringify(usable));
+  }
+  updateCartBadge();
+  return usable;
 }
 
 
@@ -55,7 +79,7 @@ function saveCart(cart) {
 
 
 function getCartCount() {
-  return getCart().reduce((s, i) => s + i.qty, 0);
+  return getCart().reduce((s, i) => s + Number(i.qty), 0);
 }
 
 
@@ -71,14 +95,31 @@ function getCartTotal(products) {
 
 
 async function addToCart(productId) {
-  const products = await fetchProducts();
+  let products;
+  try {
+    products = await fetchProducts();
+  } catch {
+    showToast('The catalogue is unavailable right now. Please try again.');
+    return;
+  }
   const product  = products.find(p => p.id === productId);
-  if (!product || !product.inStock) return;
+  if (!product || !product.inStock || Number(product.stockCount) <= 0) {
+    showToast('This product is no longer available.');
+    return;
+  }
 
 
-  const cart     = getCart();
+  const cart     = reconcileCart(products);
   const existing = cart.find(i => i.id === productId);
-  if (existing) { existing.qty += 1; } else { cart.push({ id: productId, qty: 1 }); }
+  if (existing) {
+    if (existing.qty >= Number(product.stockCount)) {
+      showToast('You have reached the available stock for this product.');
+      return;
+    }
+    existing.qty += 1;
+  } else {
+    cart.push({ id: productId, qty: 1 });
+  }
   saveCart(cart);
   showToast('\u2714 ' + product.name + ' added to cart!');
 }
@@ -88,7 +129,7 @@ function updateCartQty(productId, delta) {
   const cart = getCart();
   const item = cart.find(i => i.id === productId);
   if (!item) return;
-  item.qty = Math.max(1, item.qty + delta);
+  item.qty = Math.max(1, Number(item.qty) + delta);
   saveCart(cart);
   initCartPage();
 }
@@ -112,6 +153,14 @@ function escHtml(str) {
   return String(str)
     .replace(/&/g, '&amp;').replace(/</g, '&lt;')
     .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function safeImageSrc(value) {
+  const image = String(value || '');
+  if (/^https:\/\//i.test(image) || /^data:image\/(png|jpeg|jpg|webp|gif);base64,/i.test(image)) {
+    return escHtml(image);
+  }
+  return '';
 }
 
 
@@ -191,12 +240,12 @@ function renderProducts(products, category, query) {
   grid.innerHTML = list.map(p => `
     <div class="product-card">
       <div class="product-img-wrap">
-        ${p.image
-          ? `<img src="${p.image}" alt="${escHtml(p.name)}" class="product-img" loading="lazy" />`
+        ${safeImageSrc(p.image)
+          ? `<img src="${safeImageSrc(p.image)}" alt="${escHtml(p.name)}" class="product-img" loading="lazy" />`
           : `<div class="product-img-placeholder">\uD83D\uDCE6</div>`
         }
-        <span class="stock-badge ${p.inStock ? 'in-stock' : 'out-stock'}">
-          ${p.inStock ? 'Available' : 'Out of Stock'}
+        <span class="stock-badge ${p.inStock && Number(p.stockCount) > 0 ? 'in-stock' : 'out-stock'}">
+          ${p.inStock && Number(p.stockCount) > 0 ? 'Available' : 'Out of Stock'}
         </span>
       </div>
       <div class="product-body">
@@ -208,8 +257,8 @@ function renderProducts(products, category, query) {
           <button
             class="btn btn-sm btn-gold add-to-cart-btn"
             data-id="${escHtml(p.id)}"
-            ${p.inStock ? '' : 'disabled'}
-          >${p.inStock ? 'Add to Cart' : 'Unavailable'}</button>
+            ${p.inStock && Number(p.stockCount) > 0 ? '' : 'disabled'}
+          >${p.inStock && Number(p.stockCount) > 0 ? 'Add to Cart' : 'Unavailable'}</button>
         </div>
       </div>
     </div>
@@ -235,8 +284,19 @@ async function renderCart() {
   if (!cartItemsEl) return;
 
 
-  const cart     = getCart();
-  const products = await fetchProducts();
+  let products;
+  try {
+    products = await fetchProducts();
+  } catch {
+    if (cartSummary) cartSummary.classList.add('hidden');
+    if (emptyCart) {
+      emptyCart.textContent = 'We could not load your cart right now. Please try again.';
+      emptyCart.classList.remove('hidden');
+    }
+    updateCartBadge();
+    return;
+  }
+  const cart = reconcileCart(products);
 
 
   if (cart.length === 0) {
@@ -259,8 +319,8 @@ async function renderCart() {
     return `
       <div class="cart-item">
         <div class="cart-item-img">
-          ${p.image
-            ? `<img src="${p.image}" alt="${escHtml(p.name)}" />`
+          ${safeImageSrc(p.image)
+            ? `<img src="${safeImageSrc(p.image)}" alt="${escHtml(p.name)}" />`
             : `<div class="product-img-placeholder small">\uD83D\uDCE6</div>`
           }
         </div>
@@ -303,19 +363,32 @@ async function renderCart() {
 
 
 async function sendWhatsAppOrder() {
-  const cart     = getCart();
-  const products = await fetchProducts();
-  if (cart.length === 0) return;
+  let products;
+  try {
+    products = await fetchProducts();
+  } catch {
+    showToast('We could not validate your cart. Please try again.');
+    return;
+  }
+  const cart = reconcileCart(products);
+  if (cart.length === 0) {
+    showToast('Your cart has no available products.');
+    return;
+  }
 
 
   const lines = cart.map(item => {
     const p = products.find(pr => pr.id === item.id);
-    if (!p) return null;
-    return `\u2022 ${p.name} x${item.qty} \u2014 ${formatPrice(p.price * item.qty)}`;
+    if (!p || !p.inStock || Number(p.stockCount) < item.qty) return null;
+    return `\u2022 ${p.name} x${item.qty} \u2014 ${formatPrice(p.price)} each \u2014 ${formatPrice(p.price * item.qty)}`;
   }).filter(Boolean);
 
 
   const total   = getCartTotal(products);
+  if (!lines.length || !Number.isFinite(total) || total <= 0) {
+    showToast('Your cart has changed. Please refresh and try again.');
+    return;
+  }
   const message = [
     'Hello Katenovas Collections! \uD83D\uDC4B',
     '',
@@ -329,7 +402,7 @@ async function sendWhatsAppOrder() {
   ].join('\n');
 
 
-  window.open(`https://wa.me/${KC.WA_NUMBER}?text=${encodeURIComponent(message)}`, '_blank');
+  window.open(`https://wa.me/${KC.WA_NUMBER}?text=${encodeURIComponent(message)}`, '_blank', 'noopener');
 }
 
 
@@ -355,7 +428,16 @@ async function initProductsPage() {
   }
 
 
-  const products = await fetchProducts();
+  let products;
+  try {
+    products = await fetchProducts();
+  } catch {
+    if (empty) {
+      empty.textContent = 'We could not load products right now. Please refresh and try again.';
+      empty.classList.remove('hidden');
+    }
+    return;
+  }
   renderProducts(products, activeCategory, searchQuery);
 
 
@@ -404,8 +486,18 @@ async function initCheckoutPage() {
   const payBtn = document.getElementById('payBtn');
   if (!layout || !form || !summaryItemsEl || !totalEl || !payBtn) return;
 
-  const cart = getCart();
-  const products = await fetchProducts();
+  let products;
+  try {
+    products = await fetchProducts();
+  } catch {
+    layout.classList.add('hidden');
+    if (empty) {
+      empty.textContent = 'Checkout is temporarily unavailable. Please try again shortly.';
+      empty.classList.remove('hidden');
+    }
+    return;
+  }
+  const cart = reconcileCart(products);
   const lineItems = cart
     .map(item => {
       const product = products.find(row => row.id === item.id);

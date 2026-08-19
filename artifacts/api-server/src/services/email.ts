@@ -9,6 +9,15 @@ const FROM =
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? "eghenovakate@gmail.com";
 const WA_LINK = "https://wa.me/2348025497647";
 
+function escapeHtml(value: unknown): string {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 function formatNaira(amount: number) {
   return new Intl.NumberFormat("en-NG", {
     style: "currency",
@@ -109,24 +118,24 @@ export async function sendOrderConfirmation(order: OrderForEmail): Promise<Email
   const rows = order.items
     .map(
       (i) =>
-        `<tr><td>${i.name}</td><td style="text-align:center">${i.qty}</td><td style="text-align:right">${formatNaira(i.price)}</td><td style="text-align:right">${formatNaira(i.price * i.qty)}</td></tr>`,
+        `<tr><td>${escapeHtml(i.name)}</td><td style="text-align:center">${i.qty}</td><td style="text-align:right">${formatNaira(i.price)}</td><td style="text-align:right">${formatNaira(i.price * i.qty)}</td></tr>`,
     )
     .join("");
 
   const body = `
     <h2>🎉 Order Confirmed!</h2>
-    <p>Hi <strong>${order.customerName}</strong>, thank you for shopping with us!</p>
+    <p>Hi <strong>${escapeHtml(order.customerName)}</strong>, thank you for shopping with us!</p>
     <p>Your payment has been verified and your order is now being processed. We'll be in touch soon!</p>
     <div class="divider"></div>
-    <p><strong>Order Reference:</strong> <span class="badge">${order.paystackReference}</span></p>
+    <p><strong>Order Reference:</strong> <span class="badge">${escapeHtml(order.paystackReference)}</span></p>
     <table class="tbl">
       <thead><tr><th>Item</th><th style="text-align:center">Qty</th><th style="text-align:right">Unit Price</th><th style="text-align:right">Subtotal</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>
     <p class="total-row">Total: ${formatNaira(order.totalAmount)}</p>
     <div class="divider"></div>
-    <p><strong>📍 Delivery to:</strong><br/>${order.customerAddress}</p>
-    <p>We'll contact you on <strong>${order.customerPhone}</strong> once your order is ready for dispatch.</p>
+    <p><strong>📍 Delivery to:</strong><br/>${escapeHtml(order.customerAddress)}</p>
+    <p>We'll contact you on <strong>${escapeHtml(order.customerPhone)}</strong> once your order is ready for dispatch.</p>
     <p>Questions? We're available 24/7 on WhatsApp.</p>
     <div class="divider"></div>
     <p style="text-align:center"><a href="${WA_LINK}" class="btn">Track Order on WhatsApp</a></p>
@@ -147,7 +156,7 @@ export async function sendNewOrderAlert(order: OrderForEmail): Promise<EmailResu
   const rows = order.items
     .map(
       (i) =>
-        `<tr><td>${i.name}</td><td style="text-align:center">${i.qty}</td><td style="text-align:right">${formatNaira(i.price * i.qty)}</td></tr>`,
+        `<tr><td>${escapeHtml(i.name)}</td><td style="text-align:center">${i.qty}</td><td style="text-align:right">${formatNaira(i.price * i.qty)}</td></tr>`,
     )
     .join("");
 
@@ -155,11 +164,11 @@ export async function sendNewOrderAlert(order: OrderForEmail): Promise<EmailResu
     <h2>🛒 New Order Received!</h2>
     <p>A customer just completed a payment on your store.</p>
     <div class="divider"></div>
-    <p><strong>Customer:</strong> ${order.customerName}</p>
-    <p><strong>Phone:</strong> <a href="https://wa.me/${order.customerPhone.replace(/\D/g, "")}">${order.customerPhone}</a></p>
-    <p><strong>Email:</strong> ${order.customerEmail}</p>
-    <p><strong>Delivery Address:</strong> ${order.customerAddress}</p>
-    <p><strong>Reference:</strong> <span class="badge">${order.paystackReference}</span></p>
+    <p><strong>Customer:</strong> ${escapeHtml(order.customerName)}</p>
+    <p><strong>Phone:</strong> <a href="https://wa.me/${encodeURIComponent(order.customerPhone.replace(/\D/g, ""))}">${escapeHtml(order.customerPhone)}</a></p>
+    <p><strong>Email:</strong> ${escapeHtml(order.customerEmail)}</p>
+    <p><strong>Delivery Address:</strong> ${escapeHtml(order.customerAddress)}</p>
+    <p><strong>Reference:</strong> <span class="badge">${escapeHtml(order.paystackReference)}</span></p>
     <div class="divider"></div>
     <table class="tbl">
       <thead><tr><th>Item</th><th style="text-align:center">Qty</th><th style="text-align:right">Total</th></tr></thead>
@@ -226,11 +235,11 @@ export async function sendStatusUpdate(
 
   const body = `
     <h2>${info.emoji} ${info.headline}</h2>
-    <p>Hi <strong>${order.customerName}</strong>,</p>
+    <p>Hi <strong>${escapeHtml(order.customerName)}</strong>,</p>
     <p>${info.detail}</p>
     <div class="divider"></div>
-    <p><strong>Order Reference:</strong> <span class="badge">${order.paystackReference}</span></p>
-    <p><strong>Current Status:</strong> <span class="badge">${newStatus}</span></p>
+    <p><strong>Order Reference:</strong> <span class="badge">${escapeHtml(order.paystackReference)}</span></p>
+    <p><strong>Current Status:</strong> <span class="badge">${escapeHtml(newStatus)}</span></p>
     <div class="divider"></div>
     <p>Need help? We're available 24/7 — just tap below.</p>
     <p style="text-align:center"><a href="${WA_LINK}" class="btn">Chat on WhatsApp</a></p>

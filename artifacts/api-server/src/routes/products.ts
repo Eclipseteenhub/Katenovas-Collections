@@ -96,7 +96,7 @@ router.post("/products", requireAdmin, async (req, res) => {
         category: d.category,
         image: d.image,
         video: d.video,
-        inStock: d.inStock,
+        inStock: d.inStock && d.stockCount > 0,
         stockCount: d.stockCount,
         colors: normalizeList(d.colors),
         sizes: normalizeList(d.sizes),
@@ -135,6 +135,19 @@ router.put("/products/:id", requireAdmin, async (req, res) => {
   if (d.sizes !== undefined) updates.sizes = normalizeList(d.sizes);
 
   try {
+    const [existing] = await db
+      .select()
+      .from(productsTable)
+      .where(eq(productsTable.id, String(req.params.id)));
+    if (!existing) {
+      res.status(404).json({ error: "Product not found" });
+      return;
+    }
+
+    const nextStockCount = d.stockCount ?? existing.stockCount;
+    const nextInStock = (d.inStock ?? existing.inStock) && nextStockCount > 0;
+    updates.stockCount = nextStockCount;
+    updates.inStock = nextInStock;
     const [row] = await db
       .update(productsTable)
       .set(updates)

@@ -8,7 +8,8 @@
 const API_BASE = '/api';
 const ORDER_STATUSES = [
   'Pending', 'Processing', 'Ready for Dispatch',
-  'Shipped', 'Out for Delivery', 'Delivered', 'Cancelled'
+  'Shipped', 'Out for Delivery', 'Delivered', 'Cancelled',
+  'Stock Review Required'
 ];
 
 /* ─── API helpers ─────────────────────── */
@@ -73,6 +74,14 @@ function formatDate(d) {
   catch { return ''; }
 }
 
+function safeImageSrc(value) {
+  const image = String(value || '');
+  if (/^https:\/\//i.test(image) || /^data:image\/(png|jpeg|jpg|webp|gif);base64,/i.test(image)) {
+    return escHtml(image);
+  }
+  return '';
+}
+
 /* ─── Toast ───────────────────────────── */
 
 function showToast(msg, type) {
@@ -88,7 +97,7 @@ function showToast(msg, type) {
 /* ─── Stats ───────────────────────────── */
 
 function updateStats(products) {
-  const inStock = products.filter(p => p.inStock).length;
+  const inStock = products.filter(p => p.inStock && Number(p.stockCount) > 0).length;
   const el = id => document.getElementById(id);
   if (el('totalProducts')) el('totalProducts').textContent = products.length;
   if (el('inStockCount'))  el('inStockCount').textContent  = inStock;
@@ -123,8 +132,8 @@ async function renderAdminProducts() {
     return `
     <div class="admin-product-row">
       <div class="admin-product-img">
-        ${p.image
-          ? `<img src="${p.image}" alt="${escHtml(p.name)}" />`
+        ${safeImageSrc(p.image)
+          ? `<img src="${safeImageSrc(p.image)}" alt="${escHtml(p.name)}" />`
           : `<div class="product-img-placeholder small">\uD83D\uDCE6</div>`}
       </div>
       <div class="admin-product-info">
@@ -417,7 +426,8 @@ async function saveProduct(e) {
 
   let hasError = false;
   if (!name)                             { setFieldError('productName',     'Product name is required.');    hasError = true; }
-  if (!priceRaw || isNaN(price) || price < 0) { setFieldError('productPrice', 'Enter a valid price.');      hasError = true; }
+  if (!priceRaw || isNaN(price) || price <= 0) { setFieldError('productPrice', 'Enter a valid price greater than zero.');      hasError = true; }
+  if (!Number.isInteger(stockCount) || stockCount < 0) { showToast('Stock count must be a whole number of zero or more.', 'error'); hasError = true; }
   if (!category)                         { setFieldError('productCategory', 'Please select a category.');   hasError = true; }
   if (hasError) { showToast('Please fix the highlighted fields.', 'error'); return; }
 
@@ -472,6 +482,10 @@ async function executeDelete() {
 
 function handleImageUpload(file) {
   if (!file) return;
+  if (!['image/png', 'image/jpeg', 'image/webp', 'image/gif'].includes(file.type)) {
+    showToast('Please upload a PNG, JPEG, WebP, or GIF image.', 'error');
+    return;
+  }
   if (file.size > 3 * 1024 * 1024) { showToast('Image must be under 3 MB.', 'error'); return; }
   const reader = new FileReader();
   reader.onload = ev => {

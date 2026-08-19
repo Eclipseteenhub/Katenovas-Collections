@@ -36,7 +36,7 @@ app.use(
 );
 const allowedOrigins = new Set(
   [process.env.APP_ORIGIN, ...(process.env.CORS_ALLOWED_ORIGINS ?? '').split(',')]
-    .map((value) => value.trim().replace(/\/$/, ''))
+    .map((value) => typeof value === "string" ? value.trim().replace(/\/$/, '') : "")
     .filter(Boolean),
 );
 
