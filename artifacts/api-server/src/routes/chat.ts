@@ -5,6 +5,10 @@ import { z } from "zod";
 
 const router = Router();
 
+const chatAttempts = new Map<string, { count: number; resetAt: number }>();
+const CHAT_WINDOW_MS = 60 * 60 * 1000;
+const MAX_CHAT_REQUESTS_PER_WINDOW = 30;
+
 const SYSTEM_PROMPT = `You are Kena, a friendly and knowledgeable shopping assistant for Katenovas Collections — a Nigerian fashion and lifestyle brand based in Benin City.
 
 BUSINESS INFORMATION:
@@ -57,6 +61,19 @@ const chatSchema = z.object({
 
 // POST /api/chat
 router.post("/chat", async (req, res) => {
+  const key = req.ip || req.socket.remoteAddress || "unknown";
+  const now = Date.now();
+  const attempt = chatAttempts.get(key);
+  if (attempt && attempt.resetAt <= now) chatAttempts.delete(key);
+  const current = chatAttempts.get(key);
+  if (current && current.count >= MAX_CHAT_REQUESTS_PER_WINDOW) {
+    res.status(429).json({ error: "You have reached the chat limit. Please try again later." });
+    return;
+  }
+  const next = chatAttempts.get(key) ?? { count: 0, resetAt: now + CHAT_WINDOW_MS };
+  next.count += 1;
+  chatAttempts.set(key, next);
+
   const parsed = chatSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Invalid request" });

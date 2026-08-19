@@ -6,6 +6,14 @@ import { requireAdmin } from "../middleware/requireAdmin";
 
 const router = Router();
 
+export const productCategories = [
+  "Clothes",
+  "Jewelry",
+  "Home Accessories",
+  "Shoes",
+  "Bags",
+] as const;
+
 function serialize(p: typeof productsTable.$inferSelect) {
   return {
     id: p.id,
@@ -24,22 +32,28 @@ function serialize(p: typeof productsTable.$inferSelect) {
 }
 
 const productBodySchema = z.object({
-  name: z.string().min(1),
-  price: z.number().nonnegative(),
-  description: z.string().optional().default(""),
-  category: z.string().min(1),
-  image: z.string().optional().default(""),
-  video: z.string().optional().default(""),
+  name: z.string().trim().min(1).max(200),
+  price: z.number().positive(),
+  description: z.string().trim().max(2000).optional().default(""),
+  category: z.enum(productCategories),
+  image: z.string().max(4_500_000).optional().default(""),
+  video: z.string().max(2000).optional().default(""),
   inStock: z.boolean().optional().default(true),
   stockCount: z.number().int().nonnegative().optional().default(0),
-  colors: z.union([z.string(), z.array(z.string())]).optional().default(""),
-  sizes: z.union([z.string(), z.array(z.string())]).optional().default(""),
+  colors: z.union([z.string().max(500), z.array(z.string().max(80)).max(30)]).optional().default(""),
+  sizes: z.union([z.string().max(500), z.array(z.string().max(80)).max(30)]).optional().default(""),
 });
 
 function normalizeList(v: string | string[] | undefined): string {
   if (!v) return "";
-  if (Array.isArray(v)) return v.filter(Boolean).join(",");
-  return v;
+  const values = Array.isArray(v) ? v : v.split(",");
+  return [...new Set(values.map((value) => value.trim()).filter(Boolean))].join(",");
+}
+
+function isSafeImageValue(value: string): boolean {
+  if (!value) return true;
+  return /^data:image\/(png|jpeg|jpg|webp|gif);base64,[a-z0-9+/=\s]+$/i.test(value)
+    || /^https:\/\//i.test(value);
 }
 
 // GET /api/products
@@ -65,6 +79,10 @@ router.post("/products", requireAdmin, async (req, res) => {
   }
 
   const d = parsed.data;
+  if (!isSafeImageValue(d.image)) {
+    res.status(400).json({ error: "Product image must be a safe image URL or image upload." });
+    return;
+  }
   const id = "p_" + Date.now() + "_" + Math.random().toString(36).slice(2, 7);
 
   try {
@@ -101,6 +119,10 @@ router.put("/products/:id", requireAdmin, async (req, res) => {
 
   const updates: Partial<typeof productsTable.$inferInsert> = {};
   const d = parsed.data;
+  if (d.image !== undefined && !isSafeImageValue(d.image)) {
+    res.status(400).json({ error: "Product image must be a safe image URL or image upload." });
+    return;
+  }
   if (d.name !== undefined) updates.name = d.name;
   if (d.price !== undefined) updates.price = d.price.toString();
   if (d.description !== undefined) updates.description = d.description;

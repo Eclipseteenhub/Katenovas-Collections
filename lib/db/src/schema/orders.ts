@@ -52,4 +52,10 @@ export const orderStatusValues = [
   "Cancelled",
 ] as const;
 
-export const paymentStatusValues = ["pending", "success", "failed"] as const;
+export const paymentStatusValues = [
+  "pending",
+  "processing",
+  "success",
+  "failed",
+  "abandoned",
+] as const;

@@ -80,5 +80,3 @@ app.use("/api", router);
 
 
 export default app;
-Footer
-© 2026 GitHub, Inc.

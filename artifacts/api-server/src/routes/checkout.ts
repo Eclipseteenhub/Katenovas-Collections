@@ -251,7 +251,20 @@ router.get("/checkout/verify/:reference", async (req, res) => {
       return;
     }
 
-    if (verifyData?.data?.status !== "success") {
+    const transaction = verifyData.data;
+    const expectedAmount = Math.round(Number(order.totalAmount) * 100);
+    if (
+      transaction?.reference !== reference ||
+      transaction?.amount !== expectedAmount ||
+      transaction?.currency !== "NGN" ||
+      transaction?.customer?.email?.toLowerCase() !== order.customerEmail.toLowerCase()
+    ) {
+      req.log.error({ reference }, "Paystack verification did not match the order");
+      res.status(502).json({ error: "We could not verify this payment yet. Please contact us if you were charged." });
+      return;
+    }
+
+    if (transaction?.status !== "success") {
       const [updated] = await db.update(ordersTable)
         .set({ paymentStatus: "failed", updatedAt: new Date() })
         .where(and(eq(ordersTable.id, order.id), eq(ordersTable.paymentStatus, "pending")))

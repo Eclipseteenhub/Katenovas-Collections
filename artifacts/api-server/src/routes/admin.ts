@@ -3,6 +3,10 @@ import { z } from "zod";
 
 const router: IRouter = Router();
 
+const loginAttempts = new Map<string, { count: number; resetAt: number }>();
+const MAX_LOGIN_ATTEMPTS = 10;
+const LOGIN_WINDOW_MS = 15 * 60 * 1000;
+
 const loginSchema = z.object({
   username: z.string().min(1),
   password: z.string().min(1),
@@ -10,6 +14,16 @@ const loginSchema = z.object({
 
 // POST /api/admin/login
 router.post("/admin/login", (req, res) => {
+  const key = req.ip || req.socket.remoteAddress || "unknown";
+  const now = Date.now();
+  const attempt = loginAttempts.get(key);
+  if (attempt && attempt.resetAt <= now) loginAttempts.delete(key);
+  const current = loginAttempts.get(key);
+  if (current && current.count >= MAX_LOGIN_ATTEMPTS) {
+    res.status(429).json({ error: "Too many login attempts. Please try again later." });
+    return;
+  }
+
   const parsed = loginSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Username and password are required" });
@@ -27,11 +41,15 @@ router.post("/admin/login", (req, res) => {
   }
 
   if (username === adminUsername && password === adminPassword) {
+    loginAttempts.delete(key);
     req.session.isAdmin = true;
     res.json({ success: true });
     return;
   }
 
+  const next = loginAttempts.get(key) ?? { count: 0, resetAt: now + LOGIN_WINDOW_MS };
+  next.count += 1;
+  loginAttempts.set(key, next);
   res.status(401).json({ error: "Invalid username or password" });
 });
 

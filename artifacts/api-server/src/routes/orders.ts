@@ -82,6 +82,15 @@ router.patch("/orders/:id", requireAdmin, async (req, res) => {
     updates.sellerNotes = parsed.data.sellerNotes;
 
   try {
+    const [existing] = await db
+      .select()
+      .from(ordersTable)
+      .where(eq(ordersTable.id, String(req.params.id)));
+    if (!existing) {
+      res.status(404).json({ error: "Order not found" });
+      return;
+    }
+
     const [row] = await db
       .update(ordersTable)
       .set(updates)
@@ -94,7 +103,11 @@ router.patch("/orders/:id", requireAdmin, async (req, res) => {
     }
 
     // Send status update email asynchronously (only if status changed)
-    if (parsed.data.orderStatus && row.paymentStatus === "success") {
+    if (
+      parsed.data.orderStatus &&
+      parsed.data.orderStatus !== existing.orderStatus &&
+      row.paymentStatus === "success"
+    ) {
       const orderData: emailService.OrderForEmail = {
         id: row.id,
         customerName: row.customerName,
