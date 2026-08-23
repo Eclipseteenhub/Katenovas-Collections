@@ -1,7 +1,7 @@
 import { Resend } from "resend";
 import { logger } from "../lib/logger";
 
-const resend = new Resend(process.env.Resend_API_KEY);
+const resend = new Resend(process.env.Resend_API_KEY || "re_placeholder");
 
 const FROM =
   process.env.RESEND_FROM_EMAIL ??

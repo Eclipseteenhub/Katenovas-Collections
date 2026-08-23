@@ -2,6 +2,7 @@ import express, { type Express } from "express";
 import cors from "cors";
 import session from "express-session";
 import pinoHttp from "pino-http";
+import path from "path";
 import router from "./routes";
 import { logger } from "./lib/logger";
 
@@ -78,5 +79,7 @@ app.use(
 
 app.use("/api", router);
 
+const webAppDir = path.resolve(__dirname, "../../web-app");
+app.use(express.static(webAppDir));
 
 export default app;

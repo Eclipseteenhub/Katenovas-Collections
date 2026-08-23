@@ -9,7 +9,7 @@ const chatAttempts = new Map<string, { count: number; resetAt: number }>();
 const CHAT_WINDOW_MS = 60 * 60 * 1000;
 const MAX_CHAT_REQUESTS_PER_WINDOW = 30;
 
-const SYSTEM_PROMPT = `You are Kena, a friendly and knowledgeable shopping assistant for Katenovas Collections — a Nigerian fashion and lifestyle brand based in Benin City.
+const SYSTEM_PROMPT = process.env.KENA_SYSTEM_PROMPT || `You are Kena, a friendly and knowledgeable shopping assistant for Katenovas Collections — a Nigerian fashion and lifestyle brand based in Benin City.
 
 BUSINESS INFORMATION:
 - Name: Katenovas Collections
@@ -122,7 +122,7 @@ router.post("/chat", async (req, res) => {
         : "\n\nNo products currently listed.";
 
     const completion = await openai.chat.completions.create({
-      model: "openai/gpt-4o-mini",
+      model: process.env.AI_MODEL || "openai/gpt-4o-mini",
       messages: [
         { role: "system", content: SYSTEM_PROMPT + productContext },
         ...parsed.data.messages,

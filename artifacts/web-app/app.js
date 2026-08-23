@@ -163,6 +163,19 @@ function safeImageSrc(value) {
   return '';
 }
 
+function showProductSkeletons(count = 8) {
+  const grid = document.getElementById('productsGrid');
+  if (!grid) return;
+  grid.innerHTML = Array.from({ length: count }).map(() => `
+    <div class="skeleton-card">
+      <div class="skeleton skeleton-img"></div>
+      <div class="skeleton skeleton-line short"></div>
+      <div class="skeleton skeleton-line"></div>
+      <div class="skeleton skeleton-line price"></div>
+    </div>
+  `).join('');
+}
+
 
 /* ─── Cart badge ──────────────────────── */
 
@@ -201,6 +214,12 @@ function initNav() {
   nav.addEventListener('click', e => {
     if (e.target.classList.contains('nav-link')) nav.classList.remove('open');
   });
+  const header = document.querySelector('.site-header');
+  if (header) {
+    const onScroll = () => header.classList.toggle('scrolled', window.scrollY > 8);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+  }
 }
 
 
@@ -237,8 +256,8 @@ function renderProducts(products, category, query) {
 
 
   if (empty) empty.classList.add('hidden');
-  grid.innerHTML = list.map(p => `
-    <div class="product-card">
+  grid.innerHTML = list.map((p, i) => `
+    <div class="product-card" style="animation-delay:${(i * 0.06).toFixed(2)}s">
       <div class="product-img-wrap">
         ${safeImageSrc(p.image)
           ? `<img src="${safeImageSrc(p.image)}" alt="${escHtml(p.name)}" class="product-img" loading="lazy" />`
@@ -428,13 +447,17 @@ async function initProductsPage() {
   }
 
 
+  showProductSkeletons();
   let products;
   try {
     products = await fetchProducts();
   } catch {
-    if (empty) {
-      empty.textContent = 'We could not load products right now. Please refresh and try again.';
-      empty.classList.remove('hidden');
+    const emptyEl2 = document.getElementById('emptyMessage');
+    const grid2 = document.getElementById('productsGrid');
+    if (grid2) grid2.innerHTML = '';
+    if (emptyEl2) {
+      emptyEl2.textContent = 'We could not load products right now. Please refresh and try again.';
+      emptyEl2.classList.remove('hidden');
     }
     return;
   }
