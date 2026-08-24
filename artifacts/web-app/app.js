@@ -631,6 +631,61 @@ async function initOrderSuccessPage() {
 }
 
 
+async function initTrackPage() {
+  const input = document.getElementById('trackInput');
+  const btn = document.getElementById('trackBtn');
+  const result = document.getElementById('trackResult');
+  const errEl = document.getElementById('trackError');
+  const titleEl = document.getElementById('trackTitle');
+  const msgEl = document.getElementById('trackMessage');
+  const refEl = document.getElementById('trackRef');
+  const courierEl = document.getElementById('trackCourier');
+  const timelineEl = document.getElementById('trackTimeline');
+  if (!input || !btn || !result) return;
+
+  const statusSteps = ['Pending','Processing','Ready for Dispatch','Shipped','Out for Delivery','Delivered'];
+
+  async function doTrack() {
+    const ref = input.value.trim();
+    if (!ref) { showToast('Please enter your order reference.'); return; }
+    btn.disabled = true; btn.textContent = 'Tracking…';
+    errEl?.classList.add('hidden'); result.classList.add('hidden');
+    try {
+      const data = await apiFetch('/orders/track/' + encodeURIComponent(ref));
+      const o = data.order;
+      const tl = data.timeline || [];
+      result.classList.remove('hidden');
+      if (titleEl) titleEl.textContent = o.orderStatus;
+      if (msgEl) msgEl.textContent = 'Payment: ' + o.paymentStatus + ' • Ordered: ' + new Date(o.createdAt).toLocaleString();
+      if (refEl) refEl.textContent = o.reference;
+      if (courierEl) {
+        if (o.courierName || o.trackingNumber) {
+          courierEl.innerHTML = (o.courierName ? 'Courier: <b>' + escHtml(o.courierName) + '</b> ' : '') + (o.trackingNumber ? 'Tracking: <b>' + escHtml(o.trackingNumber) + '</b>' : '') + (o.estimatedDelivery ? ' • Est. delivery: ' + new Date(o.estimatedDelivery).toLocaleDateString() : '');
+        } else { courierEl.textContent = 'Courier details will appear here once dispatched.'; }
+      }
+      if (timelineEl) {
+        const all = statusSteps.map(s => {
+          const found = tl.find(t => t.status === s);
+          const isActive = statusSteps.indexOf(s) <= statusSteps.indexOf(o.orderStatus);
+          return '<div style="display:flex;gap:0.75rem;align-items:flex-start;padding:0.5rem 0;border-left:2px solid ' + (isActive ? 'var(--gold)' : '#eee') + ';padding-left:1rem;margin-left:0.5rem;">' +
+            '<div style="width:10px;height:10px;border-radius:50%;background:' + (isActive ? 'var(--burgundy)' : '#ddd') + ';margin-top:0.35rem;flex-shrink:0;"></div>' +
+            '<div><div style="font-weight:600;font-size:0.9rem;' + (isActive ? '' : 'color:#999;') + '">' + escHtml(s) + '</div>' +
+            (found ? '<div style="font-size:0.78rem;color:var(--gray);">' + new Date(found.createdAt).toLocaleString() + (found.note ? ' — ' + escHtml(found.note) : '') + '</div>' : '<div style="font-size:0.78rem;color:#bbb;">pending</div>') +
+            '</div></div>';
+        }).join('');
+        timelineEl.innerHTML = all || '<p style="color:var(--gray);font-size:0.9rem;">No timeline events yet.</p>';
+      }
+    } catch (e) {
+      if (errEl) { errEl.textContent = e.message || 'Order not found. Check your reference.'; errEl.classList.remove('hidden'); }
+    } finally { btn.disabled = false; btn.textContent = 'Track Order'; }
+  }
+
+  btn.addEventListener('click', doTrack);
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') doTrack(); });
+  const urlRef = new URLSearchParams(window.location.search).get('ref') || new URLSearchParams(window.location.search).get('reference');
+  if (urlRef) { input.value = urlRef; doTrack(); }
+}
+
 /* ─── AI Chat Widget ──────────────────── */
 
 
@@ -805,6 +860,7 @@ document.addEventListener('DOMContentLoaded', () => {
   else if (path.includes('cart')) { initCartPage(); }
   else if (path.includes('checkout')) { initCheckoutPage(); }
   else if (path.includes('order-success')) { initOrderSuccessPage(); }
+  else if (path.includes('track')) { initTrackPage(); }
 
 
   // Chat widget — on all customer pages
