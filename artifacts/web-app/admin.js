@@ -415,7 +415,7 @@ function clearForm() {
   document.getElementById('productId').value        = '';
   document.getElementById('productImageData').value = '';
   document.getElementById('productVideoData').value = '';
-  videoTrim = { start: 0, end: 0, muted: false };
+  videoTrim = { start: 0, end: 0, muted: false, cuts: [] };
   document.getElementById('productStockCount').value = '0';
   document.getElementById('productColors').value    = '';
   document.getElementById('productSizes').value     = '';
@@ -426,9 +426,11 @@ function clearForm() {
   const vp = document.getElementById('videoPreview');
   const vl = document.getElementById('videoUploadLabel');
   const vb = document.getElementById('videoEditBar');
-  if (vp) { vp.pause(); vp.removeAttribute('src'); vp.classList.add('hidden'); }
+  const vi = document.getElementById('productVideo');
+  if (vp) { vp.pause(); vp.removeAttribute('src'); vp.classList.add('hidden'); vp.style.pointerEvents = 'none'; }
   if (vl) vl.classList.remove('hidden');
   if (vb) vb.classList.add('hidden');
+  if (vi) { vi.style.display = ''; vi.style.pointerEvents = ''; vi.value = ''; }
   document.getElementById('productInStock').checked = true;
   clearAllFieldErrors();
 }
@@ -472,22 +474,25 @@ function openEditModal(id, products) {
   }
 
   let vSrc = product.video || '';
-  let vMeta = { start: 0, end: 0, muted: false };
-  try { if (vSrc && vSrc.trim().startsWith('{')) { const o=JSON.parse(vSrc); vSrc=o.src||''; vMeta={ start:o.trimStart||0, end:o.trimEnd||0, muted:!!o.muted }; } } catch {}
+  let vMeta = { start: 0, end: 0, muted: false, cuts: [] };
+  try { if (vSrc && vSrc.trim().startsWith('{')) { const o=JSON.parse(vSrc); vSrc=o.src||''; vMeta={ start:o.trimStart||0, end:o.trimEnd||0, muted:!!o.muted, cuts: o.cuts || [] }; } } catch {}
   document.getElementById('productVideoData').value = product.video || '';
-  videoTrim = { start: vMeta.start, end: vMeta.end || 0, muted: vMeta.muted };
+  videoTrim = { start: vMeta.start, end: vMeta.end || 0, muted: vMeta.muted, cuts: vMeta.cuts || [] };
   const vPreview = document.getElementById('videoPreview');
   const vLabel = document.getElementById('videoUploadLabel');
   const vBar = document.getElementById('videoEditBar');
+  const vInput = document.getElementById('productVideo');
   if (vSrc) {
-    vPreview.src = vSrc; vPreview.classList.remove('hidden');
+    vPreview.src = vSrc; vPreview.classList.remove('hidden'); vPreview.style.pointerEvents = 'auto';
     if (vLabel) vLabel.classList.add('hidden');
     if (vBar) vBar.classList.remove('hidden');
+    if (vInput) { vInput.style.display = 'none'; vInput.style.pointerEvents = 'none'; }
     if (vMeta.muted) vPreview.muted = true;
   } else {
-    vPreview.removeAttribute('src'); vPreview.classList.add('hidden');
+    vPreview.removeAttribute('src'); vPreview.classList.add('hidden'); vPreview.style.pointerEvents = 'none';
     if (vLabel) vLabel.classList.remove('hidden');
     if (vBar) vBar.classList.add('hidden');
+    if (vInput) { vInput.style.display = ''; vInput.style.pointerEvents = ''; }
   }
 
   document.getElementById('productModal').classList.remove('hidden');
@@ -499,13 +504,15 @@ function closeProductModal() {
   document.body.classList.remove('modal-open');
   clearAllFieldErrors();
   editingId = null;
-  videoTrim = { start: 0, end: 0, muted: false };
+  videoTrim = { start: 0, end: 0, muted: false, cuts: [] };
   const vp = document.getElementById('videoPreview');
-  if (vp) { vp.pause(); vp.removeAttribute('src'); vp.classList.add('hidden'); }
+  if (vp) { vp.pause(); vp.removeAttribute('src'); vp.classList.add('hidden'); vp.style.pointerEvents = 'none'; }
   const vl = document.getElementById('videoUploadLabel');
   if (vl) vl.classList.remove('hidden');
   const vb = document.getElementById('videoEditBar');
   if (vb) vb.classList.add('hidden');
+  const vi2 = document.getElementById('productVideo');
+  if (vi2) { vi2.style.display = ''; vi2.style.pointerEvents = ''; }
   const ve = document.getElementById('videoEditorModal');
   if (ve) ve.classList.add('hidden');
 }
@@ -527,8 +534,10 @@ async function saveProduct(e) {
   const colors      = document.getElementById('productColors').value.trim();
   const sizes       = document.getElementById('productSizes').value.trim();
   let video       = document.getElementById('productVideoData').value || '';
-  if (video && (videoTrim.muted || videoTrim.start > 0.05 || (videoTrim.end && Math.abs(videoTrim.end - (document.getElementById('videoPreview')?.duration || 0)) > 0.5))) {
-    try { video = JSON.stringify({ src: video, trimStart: videoTrim.start, trimEnd: videoTrim.end, muted: videoTrim.muted }); } catch {}
+  // If video was already JSON, unwrap src first
+  let _vSrc = video; try { if (_vSrc && _vSrc.trim().startsWith('{')) _vSrc = JSON.parse(_vSrc).src || _vSrc; } catch {}
+  if (video && (videoTrim.muted || videoTrim.start > 0.05 || (videoTrim.end && Math.abs(videoTrim.end - (document.getElementById('videoPreview')?.duration || 0)) > 0.5) || (videoTrim.cuts && videoTrim.cuts.length))) {
+    try { video = JSON.stringify({ src: _vSrc, trimStart: videoTrim.start, trimEnd: videoTrim.end, muted: videoTrim.muted, cuts: videoTrim.cuts || [] }); } catch {}
   }
 
   let hasError = false;
@@ -607,7 +616,7 @@ function handleImageUpload(file) {
   reader.readAsDataURL(file);
 }
 
-let videoTrim = { start: 0, end: 0, muted: false };
+let videoTrim = { start: 0, end: 0, muted: false, cuts: [] };
 
 function handleVideoUpload(file) {
   if (!file) return;
@@ -622,13 +631,15 @@ function handleVideoUpload(file) {
     const preview = document.getElementById('videoPreview');
     const label = document.getElementById('videoUploadLabel');
     const bar = document.getElementById('videoEditBar');
+    const input = document.getElementById('productVideo');
     preview.src = dataUrl;
     preview.classList.remove('hidden');
+    preview.style.pointerEvents = 'auto';
     if (label) label.classList.add('hidden');
     if (bar) bar.classList.remove('hidden');
+    if (input) { input.style.display = 'none'; input.style.pointerEvents = 'none'; }
     preview.onloadedmetadata = () => {
-      videoTrim = { start: 0, end: preview.duration || 0, muted: false };
-      // auto-generate cover if image empty
+      videoTrim = { start: 0, end: preview.duration || 0, muted: false, cuts: [] };
       if (!document.getElementById('productImageData').value) {
         setTimeout(() => captureFrame(preview, 0.5), 600);
       }
@@ -767,12 +778,14 @@ async function initDashboardPage() {
   const videoInput = document.getElementById('productVideo');
   if (videoInput) videoInput.addEventListener('change', e => handleVideoUpload(e.target.files[0]));
   document.getElementById('clearVideoBtn')?.addEventListener('click', () => {
-    document.getElementById('productVideoData').value = '';
-    videoTrim = { start: 0, end: 0, muted: false };
-    const vp = document.getElementById('videoPreview');
-    if (vp) { vp.pause(); vp.removeAttribute('src'); vp.classList.add('hidden'); }
-    document.getElementById('videoUploadLabel')?.classList.remove('hidden');
-    document.getElementById('videoEditBar')?.classList.add('hidden');
+  document.getElementById('productVideoData').value = '';
+  videoTrim = { start: 0, end: 0, muted: false, cuts: [] };
+  const vp = document.getElementById('videoPreview');
+  if (vp) { vp.pause(); vp.removeAttribute('src'); vp.classList.add('hidden'); vp.style.pointerEvents = 'none'; }
+  const vi = document.getElementById('productVideo');
+  if (vi) { vi.style.display = ''; vi.style.pointerEvents = ''; vi.value = ''; }
+  document.getElementById('videoUploadLabel')?.classList.remove('hidden');
+  document.getElementById('videoEditBar')?.classList.add('hidden');
   });
   document.getElementById('pickCoverFrame')?.addEventListener('click', () => {
     const vp = document.getElementById('videoPreview');
@@ -798,9 +811,49 @@ async function initDashboardPage() {
       if (muteToggle) muteToggle.checked = !!videoTrim.muted;
       const upd = () => { if (trimLabel) trimLabel.textContent = parseFloat(trimS.value).toFixed(1) + 's — ' + parseFloat(trimE.value).toFixed(1) + 's'; };
       trimS.oninput = upd; trimE.oninput = upd; upd();
+      renderCuts();
     };
+    if (!edVideo.duration) renderCuts();
     edModal.classList.remove('hidden'); document.body.classList.add('modal-open');
   }
+  // Split & cut handling
+  const splitBtn = document.getElementById('splitBtn');
+  const cutsList = document.getElementById('cutsList');
+  const splitInfo = document.getElementById('splitInfo');
+  function renderCuts() {
+    if (!cutsList) return;
+    const cuts = videoTrim.cuts || [];
+    if (!cuts.length) { cutsList.innerHTML = '<span style="font-size:0.75rem;color:#999;">No cuts yet. Pause video where you want to cut, then press Split.</span>'; if (splitInfo) splitInfo.textContent = ''; return; }
+    cutsList.innerHTML = cuts.map((c,i) => `<div style="display:flex;align-items:center;gap:0.5rem;background:#fff5f5;border:1px solid #f0d0d0;padding:0.4rem 0.6rem;border-radius:6px;font-size:0.78rem;"><span>✂️ ${c.start.toFixed(1)}s → ${c.end.toFixed(1)}s</span><span style="color:#999;">will be skipped</span><button data-idx="${i}" class="remove-cut" style="margin-left:auto;color:var(--red);background:none;border:none;cursor:pointer;font-size:0.75rem;">Remove</button></div>`).join('');
+    cutsList.querySelectorAll('.remove-cut').forEach(b => b.addEventListener('click', () => { videoTrim.cuts.splice(parseInt(b.dataset.idx),1); renderCuts(); }));
+    if (splitInfo) splitInfo.textContent = cuts.length + ' cut' + (cuts.length>1?'s':'') + ' • storefront will skip ' + cuts.map(c=> (c.end-c.start).toFixed(1)+'s').join(', ');
+  }
+  splitBtn?.addEventListener('click', () => {
+    if (!edVideo.src) { showToast('Load a video first.', 'error'); return; }
+    const t = edVideo.currentTime;
+    const d = edVideo.duration || 0;
+    const s = parseFloat(trimS.value) || 0;
+    const e = parseFloat(trimE.value) || d;
+    if (t <= s + 0.3 || t >= e - 0.3) { showToast('Move playhead inside the trim range to split.', 'error'); return; }
+    const cutEnd = Math.min(t + 2, e);
+    videoTrim.cuts = videoTrim.cuts || [];
+    videoTrim.cuts.push({ start: t, end: cutEnd });
+    // keep cuts sorted
+    videoTrim.cuts.sort((a,b)=>a.start-b.start);
+    renderCuts();
+    showToast('Cut added: ' + t.toFixed(1) + 's → ' + cutEnd.toFixed(1) + 's will be removed on playback. Drag end to adjust (2s default).');
+  });
+  // Enforce trim/cuts during editor preview
+  edVideo.addEventListener('timeupdate', () => {
+    const cur = edVideo.currentTime;
+    const s = parseFloat(trimS?.value) || videoTrim.start || 0;
+    const e = parseFloat(trimE?.value) || videoTrim.end || edVideo.duration || 0;
+    if (cur < s) { edVideo.currentTime = s; return; }
+    if (e && cur >= e - 0.15) { edVideo.pause(); return; }
+    for (const c of (videoTrim.cuts || [])) {
+      if (cur >= c.start && cur < c.end - 0.05) { edVideo.currentTime = c.end; break; }
+    }
+  });
   document.getElementById('openVideoEditor')?.addEventListener('click', openVideoEditor);
   document.getElementById('closeVideoEditor')?.addEventListener('click', () => { edModal.classList.add('hidden'); document.body.classList.remove('modal-open'); });
   document.getElementById('cancelVideoEdit')?.addEventListener('click', () => { edModal.classList.add('hidden'); document.body.classList.remove('modal-open'); });

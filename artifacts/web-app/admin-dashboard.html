@@ -220,11 +220,20 @@
             </div>
           </div>
           <label class="toggle-label"><input type="checkbox" id="muteToggle"> <span>🔇 Remove audio (mute)</span></label>
+          <div style="border-top:1px solid #eee;padding-top:0.75rem;">
+            <label style="font-size:0.85rem;font-weight:600;">✂️ Split & Cut — remove middle section</label>
+            <p style="font-size:0.72rem;color:var(--gray);margin:0.2rem 0 0.5rem;">Pause where you want to split, then define the part to cut out. Storefront will skip it.</p>
+            <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
+              <button type="button" id="splitBtn" class="btn btn-outline btn-sm">Split at playhead</button>
+              <span id="splitInfo" style="font-size:0.78rem;color:var(--gray);"></span>
+            </div>
+            <div id="cutsList" style="display:flex;flex-direction:column;gap:0.4rem;margin-top:0.6rem;"></div>
+          </div>
           <div style="display:flex;gap:0.5rem;">
             <button type="button" id="applyVideoEdit" class="btn btn-gold" style="flex:1">Apply & Preview</button>
             <button type="button" id="cancelVideoEdit" class="btn btn-outline">Cancel</button>
           </div>
-          <p style="font-size:0.75rem;color:var(--gray);">Trim keeps only the chosen section — storefront playback will start/end there. Mute removes all sound.</p>
+          <p style="font-size:0.75rem;color:var(--gray);">Trim keeps only the chosen section — storefront playback will start/end there. Mute removes all sound. Cuts remove a middle segment.</p>
         </div>
       </div>
     </div>
