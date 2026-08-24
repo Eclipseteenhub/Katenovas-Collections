@@ -409,6 +409,7 @@ function clearAllFieldErrors() {
 /* ─── Modal ───────────────────────────── */
 
 let editingId = null;
+let keepVideoForNext = false;
 
 function clearForm() {
   document.getElementById('productForm').reset();
@@ -427,10 +428,14 @@ function clearForm() {
   const vl = document.getElementById('videoUploadLabel');
   const vb = document.getElementById('videoEditBar');
   const vi = document.getElementById('productVideo');
+  const sa2 = document.getElementById('saveAndAnotherBtn');
+  const mh2 = document.getElementById('multiHint');
   if (vp) { vp.pause(); vp.removeAttribute('src'); vp.classList.add('hidden'); vp.style.pointerEvents = 'none'; }
   if (vl) vl.classList.remove('hidden');
   if (vb) vb.classList.add('hidden');
   if (vi) { vi.style.display = ''; vi.style.pointerEvents = ''; vi.value = ''; }
+  if (sa2) sa2.style.display = 'none';
+  if (mh2) mh2.classList.add('hidden');
   document.getElementById('productInStock').checked = true;
   clearAllFieldErrors();
 }
@@ -557,15 +562,39 @@ async function saveProduct(e) {
     if (editingId) {
       await updateProduct(editingId, payload);
       showToast('Product updated!');
+      closeProductModal();
     } else {
       await createProduct(payload);
-      showToast('Product added!');
+      if (keepVideoForNext && video) {
+        showToast('Product added! Video kept — trim to next product\'s section and save again.');
+        document.getElementById('productName').value = '';
+        document.getElementById('productPrice').value = '';
+        document.getElementById('productCategory').value = '';
+        document.getElementById('productDescription').value = '';
+        document.getElementById('productColors').value = '';
+        document.getElementById('productSizes').value = '';
+        document.getElementById('productStockCount').value = '0';
+        document.getElementById('productInStock').checked = true;
+        document.getElementById('productImageData').value = '';
+        const ip2 = document.getElementById('imagePreview');
+        const il2 = document.getElementById('imageUploadLabel');
+        if (ip2) { ip2.src = ''; ip2.classList.add('hidden'); }
+        if (il2) il2.classList.remove('hidden');
+        const vp2 = document.getElementById('videoPreview');
+        videoTrim = { start: 0, end: vp2?.duration || videoTrim.end || 0, muted: false, cuts: [] };
+        keepVideoForNext = false;
+        await renderAdminProducts();
+        return;
+      } else {
+        showToast('Product added!');
+        closeProductModal();
+      }
     }
-    closeProductModal();
     await renderAdminProducts();
   } catch (err) {
     showToast(err.message || 'Failed to save product.', 'error');
   } finally {
+    keepVideoForNext = false;
     saveBtn.disabled    = false;
     saveBtn.textContent = 'Save Product';
   }
@@ -638,6 +667,9 @@ function handleVideoUpload(file) {
     if (label) label.classList.add('hidden');
     if (bar) bar.classList.remove('hidden');
     if (input) { input.style.display = 'none'; input.style.pointerEvents = 'none'; }
+    const sa = document.getElementById('saveAndAnotherBtn');
+    const mh = document.getElementById('multiHint');
+    if (sa) sa.style.display = ''; if (mh) mh.classList.remove('hidden');
     preview.onloadedmetadata = () => {
       videoTrim = { start: 0, end: preview.duration || 0, muted: false, cuts: [] };
       if (!document.getElementById('productImageData').value) {
@@ -786,6 +818,10 @@ async function initDashboardPage() {
   if (vi) { vi.style.display = ''; vi.style.pointerEvents = ''; vi.value = ''; }
   document.getElementById('videoUploadLabel')?.classList.remove('hidden');
   document.getElementById('videoEditBar')?.classList.add('hidden');
+  const saC = document.getElementById('saveAndAnotherBtn');
+  const mhC = document.getElementById('multiHint');
+  if (saC) saC.style.display = 'none';
+  if (mhC) mhC.classList.add('hidden');
   });
   document.getElementById('pickCoverFrame')?.addEventListener('click', () => {
     const vp = document.getElementById('videoPreview');
@@ -866,6 +902,10 @@ async function initDashboardPage() {
     if (vp) { vp.muted = videoTrim.muted; vp.currentTime = videoTrim.start; }
     showToast(videoTrim.muted ? 'Video muted — will save muted.' : 'Trim applied — storefront will respect start/end.');
     edModal.classList.add('hidden'); document.body.classList.remove('modal-open');
+  });
+  document.getElementById('saveAndAnotherBtn')?.addEventListener('click', () => {
+    keepVideoForNext = true;
+    document.getElementById('productForm').requestSubmit();
   });
 
   ['productName','productPrice','productCategory'].forEach(id => {

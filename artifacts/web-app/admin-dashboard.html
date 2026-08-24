@@ -191,10 +191,12 @@
             <p style="font-size:0.78rem;color:var(--gray);margin-top:0.35rem;">Video only = auto cover from first frame. Video + image = your image is the cover. You can also pick any frame as cover.</p>
           </div>
 
-          <div class="form-actions">
+          <div class="form-actions" style="flex-wrap:wrap;">
             <button type="button" id="cancelModal" class="btn btn-outline">Cancel</button>
             <button type="submit" id="saveProductBtn" class="btn btn-gold">Save Product</button>
+            <button type="button" id="saveAndAnotherBtn" class="btn btn-outline" style="display:none;">Save & create another from this video</button>
           </div>
+          <p id="multiHint" class="hidden" style="font-size:0.75rem;color:var(--gray);margin-top:0.5rem;">Tip: Upload one long video with multiple products, then use <b>Save & create another</b> to make Handbag → Shoes → Necklace from different sections without re-uploading.</p>
         </form>
       </div>
     </div>
