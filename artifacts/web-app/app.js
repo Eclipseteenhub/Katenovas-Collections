@@ -223,6 +223,61 @@ function initNav() {
 }
 
 
+function openProductDetail(p) {
+  const modal = document.getElementById('productDetailModal');
+  if (!modal) return;
+  document.getElementById('detailName').textContent = p.name;
+  document.getElementById('detailCategory').textContent = p.category;
+  document.getElementById('detailDesc').textContent = p.description || '';
+  document.getElementById('detailPrice').textContent = formatPrice(p.price);
+  const media = document.getElementById('detailMedia');
+  const addBtn = document.getElementById('detailAddToCart');
+  const waBtn = document.getElementById('detailWhatsApp');
+  const shareBtn = document.getElementById('detailShare');
+  // build media: image + optional video
+  let videoSrc = p.video || '';
+  let vInfo = null;
+  try { if (videoSrc && videoSrc.trim().startsWith('{')) vInfo = JSON.parse(videoSrc); } catch {}
+  const src = vInfo ? vInfo.src : videoSrc;
+  const isVideo = !!src;
+  if (isVideo) {
+    media.innerHTML = `<video id="detailVideo" src="${src}" controls style="width:100%;max-height:420px;" ${vInfo && vInfo.muted ? 'muted' : ''}></video>`;
+    const v = document.getElementById('detailVideo');
+    if (v && vInfo) {
+      v.onloadedmetadata = () => {
+        if (vInfo.trimStart) v.currentTime = vInfo.trimStart;
+      };
+      v.addEventListener('timeupdate', () => {
+        const cur = v.currentTime;
+        const s = vInfo.trimStart || 0;
+        const e = vInfo.trimEnd || v.duration || 0;
+        if (cur < s) { v.currentTime = s; return; }
+        if (e && cur >= e - 0.12) { v.pause(); return; }
+        for (const c of (vInfo.cuts || [])) {
+          if (cur >= c.start && cur < c.end - 0.05) { v.currentTime = c.end; break; }
+        }
+      });
+    }
+  } else {
+    const img = safeImageSrc(p.image);
+    media.innerHTML = img ? `<img src="${img}" alt="${escHtml(p.name)}" style="width:100%;max-height:420px;object-fit:contain;background:#000;" />` : `<div class="product-img-placeholder" style="padding:3rem;">\uD83D\uDCE6</div>`;
+  }
+  if (addBtn) {
+    addBtn.disabled = !(p.inStock && Number(p.stockCount) > 0);
+    addBtn.textContent = (p.inStock && Number(p.stockCount) > 0) ? 'Add to Cart' : 'Unavailable';
+    addBtn.onclick = () => { addToCart(p.id); modal.classList.add('hidden'); document.body.classList.remove('modal-open'); };
+  }
+  if (waBtn) waBtn.href = `https://wa.me/${KC.WA_NUMBER}?text=${encodeURIComponent('Hello Katenovas! I want ' + p.name + ' — ' + formatPrice(p.price))}`;
+  if (shareBtn) shareBtn.onclick = async () => {
+    const url = location.origin + '/products.html';
+    if (navigator.share) try { await navigator.share({ title: p.name, text: p.description, url }); return; } catch {}
+    try { await navigator.clipboard.writeText(url); showToast('Link copied!'); } catch { showToast(url); }
+  };
+  modal.classList.remove('hidden'); document.body.classList.add('modal-open');
+  modal.onclick = (e) => { if (e.target === modal) { modal.classList.add('hidden'); document.body.classList.remove('modal-open'); const v=document.getElementById('detailVideo'); if(v) v.pause(); } };
+  document.getElementById('closeDetail').onclick = () => { modal.classList.add('hidden'); document.body.classList.remove('modal-open'); const v=document.getElementById('detailVideo'); if(v) v.pause(); };
+}
+
 /* ─── Render: Products page ───────────── */
 
 
@@ -257,7 +312,7 @@ function renderProducts(products, category, query) {
 
   if (empty) empty.classList.add('hidden');
   grid.innerHTML = list.map((p, i) => `
-    <div class="product-card" style="animation-delay:${(i * 0.06).toFixed(2)}s">
+    <div class="product-card" data-id="${escHtml(p.id)}" style="animation-delay:${(i * 0.06).toFixed(2)}s;cursor:pointer;">
       <div class="product-img-wrap">
         ${safeImageSrc(p.image)
           ? `<img src="${safeImageSrc(p.image)}" alt="${escHtml(p.name)}" class="product-img" loading="lazy" />`
@@ -287,7 +342,14 @@ function renderProducts(products, category, query) {
 
   // Attach add-to-cart via event delegation (works in module scope)
   grid.querySelectorAll('.add-to-cart-btn').forEach(btn => {
-    btn.addEventListener('click', () => addToCart(btn.dataset.id));
+    btn.addEventListener('click', (e) => { e.stopPropagation(); addToCart(btn.dataset.id); });
+  });
+  grid.querySelectorAll('.product-card').forEach(card => {
+    card.addEventListener('click', (e) => {
+      if (e.target.closest('.add-to-cart-btn')) return;
+      const prod = list.find(x => x.id === card.dataset.id);
+      if (prod) openProductDetail(prod);
+    });
   });
 }
 
