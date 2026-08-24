@@ -173,6 +173,15 @@ router.patch("/orders/:id", requireAdmin, async (req, res) => {
         status: parsed.data.orderStatus,
         note: `Status changed from ${existing.orderStatus} to ${parsed.data.orderStatus}`,
       }).catch(() => {});
+      const { notificationsTable: nt } = await import("@workspace/db");
+      db.insert(nt).values({
+        id: generateId("nt"),
+        type: "status_" + parsed.data.orderStatus.toLowerCase().replace(/\s+/g,'_'),
+        title: `Order ${parsed.data.orderStatus}`,
+        message: `Order ${row.paystackReference} moved to ${parsed.data.orderStatus}`,
+        relatedOrderId: row.id,
+        isRead: false,
+      }).catch(() => {});
     }
 
     // Send status update email asynchronously (only if status changed)

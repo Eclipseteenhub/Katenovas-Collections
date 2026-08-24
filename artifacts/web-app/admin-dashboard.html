@@ -17,6 +17,17 @@
           <img src="assets/images/logo.png" alt="Katenovas Collections" class="brand-logo-img" />
         </a>
         <div class="admin-header-actions">
+          <div style="position:relative">
+            <button id="notifBell" class="btn btn-ghost btn-sm" aria-label="Notifications" style="position:relative">🔔 <span id="notifCount" class="hidden" style="position:absolute;top:-6px;right:-6px;background:var(--red);color:white;font-size:0.65rem;min-width:16px;height:16px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;padding:0 3px;">0</span></button>
+            <div id="notifDropdown" class="hidden" style="position:absolute;right:0;top:calc(100% + 8px);width:min(360px,92vw);max-height:420px;overflow:auto;background:white;border:1px solid var(--light-gray);border-radius:10px;box-shadow:var(--shadow-lg);z-index:300;">
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:0.75rem 0.9rem;border-bottom:1px solid var(--light-gray);">
+                <strong style="font-size:0.9rem;">Notifications</strong>
+                <button id="markAllReadBtn" class="btn btn-ghost" style="font-size:0.75rem;padding:0.25rem 0.5rem;">Mark all read</button>
+              </div>
+              <div id="notifList" style="display:flex;flex-direction:column;"></div>
+              <p id="noNotifs" class="empty-message" style="padding:1rem;display:none;">No notifications yet.</p>
+            </div>
+          </div>
           <a href="index.html" target="_blank" class="btn btn-outline btn-sm">View Store</a>
           <button id="logoutBtn" class="btn btn-ghost btn-sm">Logout</button>
         </div>

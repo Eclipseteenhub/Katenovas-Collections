@@ -701,6 +701,64 @@ async function initDashboardPage() {
 
   document.getElementById('refreshEmailLogsBtn')?.addEventListener('click', () => renderEmailLogs());
   initEmailComposer();
+  initNotifications();
+}
+
+async function initNotifications() {
+  const bell = document.getElementById('notifBell');
+  const dropdown = document.getElementById('notifDropdown');
+  const countEl = document.getElementById('notifCount');
+  const listEl = document.getElementById('notifList');
+  const emptyEl = document.getElementById('noNotifs');
+  const markAllBtn = document.getElementById('markAllReadBtn');
+  if (!bell || !dropdown) return;
+
+  async function fetchNotifs() {
+    try {
+      const data = await apiFetch('/notifications');
+      const notifs = data.notifications || [];
+      const unread = data.unreadCount ?? notifs.filter(n=>!n.isRead).length;
+      if (countEl) {
+        if (unread > 0) { countEl.textContent = unread > 99 ? '99+' : String(unread); countEl.classList.remove('hidden'); }
+        else countEl.classList.add('hidden');
+      }
+      if (listEl) {
+        if (!notifs.length) { listEl.innerHTML = ''; if (emptyEl) emptyEl.style.display = 'block'; return; }
+        if (emptyEl) emptyEl.style.display = 'none';
+        listEl.innerHTML = notifs.map(n => `
+          <div style="padding:0.7rem 0.9rem;border-bottom:1px solid #f0ebe3;display:flex;gap:0.6rem;${n.isRead?'opacity:0.6':''}">
+            <div style="font-size:1.1rem;">${n.type.includes('order') ? '🛒' : n.type.includes('payment') ? '💳' : n.type.includes('stock') ? '⚠️' : '🔔'}</div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-weight:600;font-size:0.85rem;">${escHtml(n.title)}</div>
+              <div style="font-size:0.8rem;color:var(--gray);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml(n.message)}</div>
+              <div style="font-size:0.7rem;color:#aaa;">${new Date(n.createdAt).toLocaleString()}</div>
+            </div>
+            ${!n.isRead ? `<button data-id="${n.id}" class="mark-read-btn" style="align-self:center;font-size:0.7rem;color:var(--burgundy);background:none;border:none;cursor:pointer;">Mark read</button>` : ''}
+          </div>
+        `).join('');
+        listEl.querySelectorAll('.mark-read-btn').forEach(b => b.addEventListener('click', async () => {
+          await apiFetch('/notifications/' + b.dataset.id + '/read', { method: 'PATCH' });
+          fetchNotifs();
+        }));
+      }
+    } catch {}
+  }
+
+  bell.addEventListener('click', (e) => {
+    e.stopPropagation();
+    dropdown.classList.toggle('hidden');
+    if (!dropdown.classList.contains('hidden')) fetchNotifs();
+  });
+  document.addEventListener('click', (e) => {
+    if (!dropdown.contains(e.target) && e.target !== bell && !bell.contains(e.target)) dropdown.classList.add('hidden');
+  });
+  markAllBtn?.addEventListener('click', async () => {
+    await apiFetch('/notifications/read-all', { method: 'PATCH' });
+    fetchNotifs();
+  });
+
+  fetchNotifs();
+  setInterval(fetchNotifs, 30000);
 }
 
 /* ─── Page init ───────────────────────── */
