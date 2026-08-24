@@ -266,6 +266,7 @@ function renderProducts(products, category, query) {
         <span class="stock-badge ${p.inStock && Number(p.stockCount) > 0 ? 'in-stock' : 'out-stock'}">
           ${p.inStock && Number(p.stockCount) > 0 ? 'Available' : 'Out of Stock'}
         </span>
+        ${p.video ? `<span style="position:absolute;bottom:0.5rem;left:0.5rem;background:rgba(0,0,0,0.72);color:white;padding:0.2rem 0.45rem;border-radius:999px;font-size:0.62rem;letter-spacing:0.03em;">▶ Video</span>` : ''}
       </div>
       <div class="product-body">
         <span class="product-category">${escHtml(p.category)}</span>

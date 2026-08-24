@@ -37,7 +37,7 @@ const productBodySchema = z.object({
   description: z.string().trim().max(2000).optional().default(""),
   category: z.enum(productCategories),
   image: z.string().max(4_500_000).optional().default(""),
-  video: z.string().max(2000).optional().default(""),
+  video: z.string().max(25_000_000).optional().default(""),
   inStock: z.boolean().optional().default(true),
   stockCount: z.number().int().nonnegative().optional().default(0),
   colors: z.union([z.string().max(500), z.array(z.string().max(80)).max(30)]).optional().default(""),

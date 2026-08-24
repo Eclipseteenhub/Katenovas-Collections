@@ -159,7 +159,7 @@
           </div>
 
           <div class="form-group">
-            <label for="productImage">Product Image</label>
+            <label for="productImage">Product Image — cover (auto from video if empty)</label>
             <div class="image-upload-wrap" id="imageUploadWrap">
               <input type="file" id="productImage" accept="image/*" class="image-file-input" />
               <div class="image-upload-label" id="imageUploadLabel">
@@ -171,11 +171,61 @@
             <input type="hidden" id="productImageData" />
           </div>
 
+          <div class="form-group">
+            <label for="productVideo">Product Video (optional) — MP4, MOV, WEBM</label>
+            <div class="image-upload-wrap" id="videoUploadWrap">
+              <input type="file" id="productVideo" accept="video/mp4,video/quicktime,video/webm" class="image-file-input" />
+              <div class="image-upload-label" id="videoUploadLabel">
+                <span class="upload-icon">🎬</span>
+                <span>Tap to upload video</span>
+              </div>
+              <video id="videoPreview" class="hidden" controls style="width:100%;max-height:220px;border-radius:8px;"></video>
+              <canvas id="frameCanvas" class="hidden"></canvas>
+            </div>
+            <input type="hidden" id="productVideoData" />
+            <div id="videoEditBar" class="hidden" style="display:flex;gap:0.5rem;margin-top:0.6rem;flex-wrap:wrap;">
+              <button type="button" id="openVideoEditor" class="btn btn-outline btn-sm">✂️ Trim / Mute</button>
+              <button type="button" id="pickCoverFrame" class="btn btn-ghost btn-sm">🖼️ Use frame as cover</button>
+              <button type="button" id="clearVideoBtn" class="btn btn-ghost btn-sm" style="color:var(--red);">Remove video</button>
+            </div>
+            <p style="font-size:0.78rem;color:var(--gray);margin-top:0.35rem;">Video only = auto cover from first frame. Video + image = your image is the cover. You can also pick any frame as cover.</p>
+          </div>
+
           <div class="form-actions">
             <button type="button" id="cancelModal" class="btn btn-outline">Cancel</button>
             <button type="submit" id="saveProductBtn" class="btn btn-gold">Save Product</button>
           </div>
         </form>
+      </div>
+    </div>
+
+    <!-- Video Editor Modal -->
+    <div id="videoEditorModal" class="modal-overlay hidden">
+      <div class="modal modal-wide">
+        <div class="modal-header">
+          <h2>Trim & Mute Video</h2>
+          <button id="closeVideoEditor" class="modal-close" aria-label="Close">&times;</button>
+        </div>
+        <video id="editorVideo" controls style="width:100%;max-height:320px;border-radius:10px;background:#000;"></video>
+        <div style="margin-top:1rem;display:flex;flex-direction:column;gap:0.75rem;">
+          <label style="font-size:0.85rem;font-weight:600;">Trim: <span id="trimLabel">0.0s — end</span></label>
+          <div style="display:flex;gap:0.75rem;">
+            <div style="flex:1;">
+              <small>Start (s)</small>
+              <input type="range" id="trimStart" min="0" max="100" value="0" step="0.1" style="width:100%">
+            </div>
+            <div style="flex:1;">
+              <small>End (s)</small>
+              <input type="range" id="trimEnd" min="0" max="100" value="100" step="0.1" style="width:100%">
+            </div>
+          </div>
+          <label class="toggle-label"><input type="checkbox" id="muteToggle"> <span>🔇 Remove audio (mute)</span></label>
+          <div style="display:flex;gap:0.5rem;">
+            <button type="button" id="applyVideoEdit" class="btn btn-gold" style="flex:1">Apply & Preview</button>
+            <button type="button" id="cancelVideoEdit" class="btn btn-outline">Cancel</button>
+          </div>
+          <p style="font-size:0.75rem;color:var(--gray);">Trim keeps only the chosen section — storefront playback will start/end there. Mute removes all sound.</p>
+        </div>
       </div>
     </div>
 

@@ -414,6 +414,8 @@ function clearForm() {
   document.getElementById('productForm').reset();
   document.getElementById('productId').value        = '';
   document.getElementById('productImageData').value = '';
+  document.getElementById('productVideoData').value = '';
+  videoTrim = { start: 0, end: 0, muted: false };
   document.getElementById('productStockCount').value = '0';
   document.getElementById('productColors').value    = '';
   document.getElementById('productSizes').value     = '';
@@ -421,6 +423,12 @@ function clearForm() {
   const label   = document.getElementById('imageUploadLabel');
   if (preview) { preview.src = ''; preview.classList.add('hidden'); }
   if (label)   label.classList.remove('hidden');
+  const vp = document.getElementById('videoPreview');
+  const vl = document.getElementById('videoUploadLabel');
+  const vb = document.getElementById('videoEditBar');
+  if (vp) { vp.pause(); vp.removeAttribute('src'); vp.classList.add('hidden'); }
+  if (vl) vl.classList.remove('hidden');
+  if (vb) vb.classList.add('hidden');
   document.getElementById('productInStock').checked = true;
   clearAllFieldErrors();
 }
@@ -463,6 +471,25 @@ function openEditModal(id, products) {
     if (label) label.classList.remove('hidden');
   }
 
+  let vSrc = product.video || '';
+  let vMeta = { start: 0, end: 0, muted: false };
+  try { if (vSrc && vSrc.trim().startsWith('{')) { const o=JSON.parse(vSrc); vSrc=o.src||''; vMeta={ start:o.trimStart||0, end:o.trimEnd||0, muted:!!o.muted }; } } catch {}
+  document.getElementById('productVideoData').value = product.video || '';
+  videoTrim = { start: vMeta.start, end: vMeta.end || 0, muted: vMeta.muted };
+  const vPreview = document.getElementById('videoPreview');
+  const vLabel = document.getElementById('videoUploadLabel');
+  const vBar = document.getElementById('videoEditBar');
+  if (vSrc) {
+    vPreview.src = vSrc; vPreview.classList.remove('hidden');
+    if (vLabel) vLabel.classList.add('hidden');
+    if (vBar) vBar.classList.remove('hidden');
+    if (vMeta.muted) vPreview.muted = true;
+  } else {
+    vPreview.removeAttribute('src'); vPreview.classList.add('hidden');
+    if (vLabel) vLabel.classList.remove('hidden');
+    if (vBar) vBar.classList.add('hidden');
+  }
+
   document.getElementById('productModal').classList.remove('hidden');
   document.body.classList.add('modal-open');
 }
@@ -472,6 +499,15 @@ function closeProductModal() {
   document.body.classList.remove('modal-open');
   clearAllFieldErrors();
   editingId = null;
+  videoTrim = { start: 0, end: 0, muted: false };
+  const vp = document.getElementById('videoPreview');
+  if (vp) { vp.pause(); vp.removeAttribute('src'); vp.classList.add('hidden'); }
+  const vl = document.getElementById('videoUploadLabel');
+  if (vl) vl.classList.remove('hidden');
+  const vb = document.getElementById('videoEditBar');
+  if (vb) vb.classList.add('hidden');
+  const ve = document.getElementById('videoEditorModal');
+  if (ve) ve.classList.add('hidden');
 }
 
 /* ─── Save product ────────────────────── */
@@ -490,6 +526,10 @@ async function saveProduct(e) {
   const stockCount  = parseInt(document.getElementById('productStockCount').value || '0', 10) || 0;
   const colors      = document.getElementById('productColors').value.trim();
   const sizes       = document.getElementById('productSizes').value.trim();
+  let video       = document.getElementById('productVideoData').value || '';
+  if (video && (videoTrim.muted || videoTrim.start > 0.05 || (videoTrim.end && Math.abs(videoTrim.end - (document.getElementById('videoPreview')?.duration || 0)) > 0.5))) {
+    try { video = JSON.stringify({ src: video, trimStart: videoTrim.start, trimEnd: videoTrim.end, muted: videoTrim.muted }); } catch {}
+  }
 
   let hasError = false;
   if (!name)                             { setFieldError('productName',     'Product name is required.');    hasError = true; }
@@ -502,7 +542,7 @@ async function saveProduct(e) {
   saveBtn.disabled    = true;
   saveBtn.textContent = 'Saving\u2026';
 
-  const payload = { name, price, category, description, image, inStock, stockCount, colors, sizes };
+  const payload = { name, price, category, description, image, video, inStock, stockCount, colors, sizes };
 
   try {
     if (editingId) {
@@ -565,6 +605,62 @@ function handleImageUpload(file) {
     if (label) label.classList.add('hidden');
   };
   reader.readAsDataURL(file);
+}
+
+let videoTrim = { start: 0, end: 0, muted: false };
+
+function handleVideoUpload(file) {
+  if (!file) return;
+  if (!['video/mp4', 'video/quicktime', 'video/webm', 'video/x-msvideo'].includes(file.type) && !file.type.startsWith('video/')) {
+    showToast('Please upload MP4, MOV, or WEBM video.', 'error'); return;
+  }
+  if (file.size > 20 * 1024 * 1024) { showToast('Video must be under 20 MB.', 'error'); return; }
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const dataUrl = ev.target.result;
+    document.getElementById('productVideoData').value = dataUrl;
+    const preview = document.getElementById('videoPreview');
+    const label = document.getElementById('videoUploadLabel');
+    const bar = document.getElementById('videoEditBar');
+    preview.src = dataUrl;
+    preview.classList.remove('hidden');
+    if (label) label.classList.add('hidden');
+    if (bar) bar.classList.remove('hidden');
+    preview.onloadedmetadata = () => {
+      videoTrim = { start: 0, end: preview.duration || 0, muted: false };
+      // auto-generate cover if image empty
+      if (!document.getElementById('productImageData').value) {
+        setTimeout(() => captureFrame(preview, 0.5), 600);
+      }
+    };
+  };
+  reader.readAsDataURL(file);
+}
+
+function captureFrame(videoEl, timeSec) {
+  try {
+    const canvas = document.getElementById('frameCanvas');
+    const t = Math.max(0, Math.min(timeSec, (videoEl.duration || 1) - 0.1));
+    const prevTime = videoEl.currentTime;
+    const doCapture = () => {
+      canvas.width = videoEl.videoWidth || 640;
+      canvas.height = videoEl.videoHeight || 360;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+      document.getElementById('productImageData').value = dataUrl;
+      const preview = document.getElementById('imagePreview');
+      const label = document.getElementById('imageUploadLabel');
+      preview.src = dataUrl;
+      preview.classList.remove('hidden');
+      if (label) label.classList.add('hidden');
+      showToast('Cover updated from video frame.');
+      videoEl.currentTime = prevTime;
+      videoEl.removeEventListener('seeked', doCapture);
+    };
+    if (Math.abs(videoEl.currentTime - t) < 0.05) doCapture();
+    else { videoEl.addEventListener('seeked', doCapture, { once: true }); videoEl.currentTime = t; }
+  } catch {}
 }
 
 /* ─── Tabs ────────────────────────────── */
@@ -667,6 +763,57 @@ async function initDashboardPage() {
   const label   = document.getElementById('imageUploadLabel');
   if (preview) preview.addEventListener('click', () => imageInput?.click());
   if (label)   label.addEventListener('click',   () => imageInput?.click());
+
+  const videoInput = document.getElementById('productVideo');
+  if (videoInput) videoInput.addEventListener('change', e => handleVideoUpload(e.target.files[0]));
+  document.getElementById('clearVideoBtn')?.addEventListener('click', () => {
+    document.getElementById('productVideoData').value = '';
+    videoTrim = { start: 0, end: 0, muted: false };
+    const vp = document.getElementById('videoPreview');
+    if (vp) { vp.pause(); vp.removeAttribute('src'); vp.classList.add('hidden'); }
+    document.getElementById('videoUploadLabel')?.classList.remove('hidden');
+    document.getElementById('videoEditBar')?.classList.add('hidden');
+  });
+  document.getElementById('pickCoverFrame')?.addEventListener('click', () => {
+    const vp = document.getElementById('videoPreview');
+    if (!vp || !vp.src) { showToast('Upload a video first.', 'error'); return; }
+    captureFrame(vp, vp.currentTime || 0.5);
+  });
+  // Video editor modal
+  const edModal = document.getElementById('videoEditorModal');
+  const edVideo = document.getElementById('editorVideo');
+  const trimS = document.getElementById('trimStart');
+  const trimE = document.getElementById('trimEnd');
+  const trimLabel = document.getElementById('trimLabel');
+  const muteToggle = document.getElementById('muteToggle');
+  function openVideoEditor() {
+    const src = document.getElementById('productVideoData').value;
+    if (!src) { showToast('Upload a video first.', 'error'); return; }
+    let s = src; try { if (s.trim().startsWith('{')) s = JSON.parse(s).src; } catch {}
+    edVideo.src = s; edVideo.muted = videoTrim.muted;
+    edVideo.onloadedmetadata = () => {
+      const d = edVideo.duration || 10;
+      trimS.max = String(Math.floor(d * 10) / 10); trimE.max = String(Math.floor(d * 10) / 10);
+      trimS.value = String(videoTrim.start || 0); trimE.value = String(videoTrim.end || d);
+      if (muteToggle) muteToggle.checked = !!videoTrim.muted;
+      const upd = () => { if (trimLabel) trimLabel.textContent = parseFloat(trimS.value).toFixed(1) + 's — ' + parseFloat(trimE.value).toFixed(1) + 's'; };
+      trimS.oninput = upd; trimE.oninput = upd; upd();
+    };
+    edModal.classList.remove('hidden'); document.body.classList.add('modal-open');
+  }
+  document.getElementById('openVideoEditor')?.addEventListener('click', openVideoEditor);
+  document.getElementById('closeVideoEditor')?.addEventListener('click', () => { edModal.classList.add('hidden'); document.body.classList.remove('modal-open'); });
+  document.getElementById('cancelVideoEdit')?.addEventListener('click', () => { edModal.classList.add('hidden'); document.body.classList.remove('modal-open'); });
+  edModal?.addEventListener('click', e => { if (e.target === edModal) { edModal.classList.add('hidden'); document.body.classList.remove('modal-open'); } });
+  document.getElementById('applyVideoEdit')?.addEventListener('click', () => {
+    videoTrim.start = parseFloat(trimS.value) || 0;
+    videoTrim.end = parseFloat(trimE.value) || (edVideo.duration || 0);
+    videoTrim.muted = !!muteToggle?.checked;
+    const vp = document.getElementById('videoPreview');
+    if (vp) { vp.muted = videoTrim.muted; vp.currentTime = videoTrim.start; }
+    showToast(videoTrim.muted ? 'Video muted — will save muted.' : 'Trim applied — storefront will respect start/end.');
+    edModal.classList.add('hidden'); document.body.classList.remove('modal-open');
+  });
 
   ['productName','productPrice','productCategory'].forEach(id => {
     const el = document.getElementById(id);
