@@ -1,0 +1,481 @@
+# Resend Email Integration & Notification System
+
+## Objective
+
+Integrate the Resend Email API into the application to provide reliable, professional, and automated email communication between the business, customers, and administrators.
+
+The email system should ensure that important events never go unnoticed, improve customer trust, and reduce the need for manual communication.
+
+The email experience should be fast, reliable, responsive, mobile-friendly, and visually consistent with the Katenovas Collections brand.
+
+---
+
+# General Requirements
+
+The application must securely integrate the Resend API using server-side environment variables.
+
+The API key must never be exposed to the browser.
+
+All email sending should occur through secure backend endpoints.
+
+The system should gracefully handle temporary failures and retry when appropriate.
+
+Every email event should be logged for auditing and troubleshooting.
+
+---
+
+# Email Templates
+
+Create reusable HTML email templates with responsive layouts.
+
+Each email should include:
+
+Business Logo
+
+Business Name
+
+Professional Header
+
+Friendly Greeting
+
+Main Message
+
+Call-to-Action Button (when applicable)
+
+Support Contact Information
+
+Business Footer
+
+Copyright Information
+
+Social Media Links (Optional)
+
+The templates should automatically adapt to mobile devices.
+
+---
+
+# Customer Emails
+
+## Account Registration
+
+When a customer creates an account:
+
+Send a welcome email.
+
+Include:
+
+Welcome message
+
+Account information
+
+Link to login
+
+Shopping button
+
+Support contact information
+
+---
+
+## Email Verification (Optional)
+
+If email verification is enabled:
+
+Generate a secure verification link.
+
+Send verification email.
+
+Expire verification links after a configurable period.
+
+---
+
+## Password Reset
+
+Allow customers to request password resets.
+
+Generate secure, time-limited reset links.
+
+Notify customers whenever a password is successfully changed.
+
+---
+
+## Order Confirmation
+
+Immediately after a successful Paystack payment:
+
+Send an order confirmation email.
+
+Include:
+
+Order Number
+
+Items Purchased
+
+Quantity
+
+Price
+
+Delivery Address
+
+Estimated Delivery Time
+
+Payment Status
+
+Transaction Reference
+
+Track Order Button
+
+Continue Shopping Button
+
+---
+
+## Payment Receipt
+
+Generate a professional receipt email.
+
+Include:
+
+Receipt Number
+
+Payment Method
+
+Transaction Reference
+
+Amount Paid
+
+Date & Time
+
+Download Receipt (future)
+
+---
+
+## Shipping Updates
+
+Whenever the seller changes the order status:
+
+Automatically email the customer.
+
+Examples:
+
+Order Confirmed
+
+Preparing Order
+
+Ready for Dispatch
+
+Out for Delivery
+
+Delivered
+
+Cancelled
+
+Refund Processed
+
+Each email should explain what the new status means.
+
+---
+
+## Delivery Completed
+
+After delivery:
+
+Thank the customer.
+
+Invite them to leave a review.
+
+Recommend related products.
+
+Provide customer support links.
+
+---
+
+# Seller Emails
+
+The seller should receive immediate email notifications for important business events.
+
+---
+
+## New Customer Registration
+
+Notify the seller whenever a new customer creates an account.
+
+Include:
+
+Customer Name
+
+Email Address
+
+Registration Time
+
+---
+
+## New Order
+
+Immediately after successful payment:
+
+Send a notification.
+
+Include:
+
+Customer Name
+
+Order Number
+
+Order Total
+
+Products Ordered
+
+Delivery Address
+
+Payment Status
+
+Direct button:
+
+View Order
+
+---
+
+## New Customer Message
+
+Whenever a customer requests human assistance:
+
+Notify the seller.
+
+Include:
+
+Customer Name
+
+Subject
+
+Preview of Message
+
+Preferred Contact Method
+
+Related Product (if available)
+
+Button:
+
+Reply from Dashboard
+
+---
+
+## AI Escalation
+
+Whenever the AI transfers a conversation to a human:
+
+Email the seller.
+
+Include:
+
+Conversation Summary
+
+Reason for Escalation
+
+Customer Information
+
+Button:
+
+Continue Conversation
+
+---
+
+## Low Stock Warning
+
+When inventory reaches the configured threshold:
+
+Notify the seller.
+
+Include:
+
+Product Name
+
+Remaining Quantity
+
+Button:
+
+Manage Inventory
+
+---
+
+## Daily Business Summary
+
+Allow the seller to receive an optional daily summary.
+
+Include:
+
+Today's Revenue
+
+Orders Received
+
+Payments Received
+
+Orders Delivered
+
+New Customers
+
+Messages Waiting
+
+Low Stock Items
+
+Top Selling Products
+
+---
+
+## Weekly Business Summary
+
+Optional weekly report.
+
+Include:
+
+Weekly Revenue
+
+Growth
+
+Best Selling Products
+
+Returning Customers
+
+Cancelled Orders
+
+Refund Statistics
+
+Customer Satisfaction
+
+AI Performance
+
+---
+
+# Admin Dashboard Integration
+
+Inside the dashboard, create an Email Log.
+
+Display:
+
+Recipient
+
+Email Type
+
+Status
+
+Date & Time
+
+Delivery Status
+
+Open Email
+
+Resend Email
+
+Search
+
+Filters
+
+---
+
+# AI Integration
+
+The AI should trigger emails automatically when appropriate.
+
+Examples:
+
+Customer requests human assistance.
+
+Customer requests product information requiring manual review.
+
+Refund request submitted.
+
+Urgent complaint received.
+
+The seller should receive an email even if not currently logged into the dashboard.
+
+---
+
+# Smart Email Behaviour
+
+Avoid duplicate emails.
+
+Prevent repeated notifications.
+
+Queue emails during temporary failures.
+
+Retry automatically.
+
+Log failures.
+
+Notify admins if repeated failures occur.
+
+---
+
+# Security
+
+Store the Resend API key only in secure environment variables.
+
+Never expose it to the client.
+
+Validate every outgoing email request.
+
+Rate-limit abuse.
+
+Log all email activity.
+
+---
+
+# Performance
+
+Send emails asynchronously.
+
+Email delivery should never block checkout, order creation, or user actions.
+
+If email delivery fails temporarily, continue processing the order and retry email delivery in the background.
+
+---
+
+# Future Enhancements
+
+Invoice PDF attachments.
+
+Marketing campaigns.
+
+Abandoned cart reminders.
+
+Birthday promotions.
+
+Coupon campaigns.
+
+Restock notifications.
+
+Wishlist availability alerts.
+
+AI-generated marketing emails.
+
+Personalized product recommendations.
+
+Seasonal promotions.
+
+Customer loyalty campaigns.
+
+---
+
+# User Experience
+
+Email communication should feel professional, reassuring, and timely.
+
+Customers should always know:
+
+Their payment was successful.
+
+Their order is being processed.
+
+Their package is moving.
+
+How to contact support.
+
+The seller should always know:
+
+When a customer needs attention.
+
+When a new order arrives.
+
+When stock needs replenishment.
+
+When important business events occur.
+
+The email system should quietly work in the background, keeping both customers and the business owner informed without requiring manual effort.

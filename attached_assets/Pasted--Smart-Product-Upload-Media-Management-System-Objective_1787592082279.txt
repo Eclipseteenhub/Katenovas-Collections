@@ -1,0 +1,358 @@
+# Smart Product Upload & Media Management System
+
+## Objective
+
+Build a modern, intuitive, and mobile-first product management system specifically designed for small businesses that primarily sell products through WhatsApp using videos rather than photos.
+
+The goal is to eliminate the need for sellers to take separate product pictures. Instead, the application should fully support video-based product listings while still providing the polished appearance of a professional e-commerce website.
+
+The experience should be simple enough that a non-technical business owner can upload products within minutes.
+
+---
+
+# Product Creation Workflow
+
+The product creation process should guide the seller through a series of simple steps.
+
+Each step should be visually clear, require minimal effort, and be optimized for mobile devices.
+
+---
+
+# Step 1 — Upload Product Media
+
+The seller should be able to upload products in three different ways.
+
+### Option 1 — Video Only
+
+The seller uploads only a video.
+
+The application automatically creates a temporary cover image by extracting a frame from the video.
+
+No additional work is required.
+
+This option is intended for businesses that already advertise products using WhatsApp videos.
+
+---
+
+### Option 2 — Image Only
+
+The seller uploads only images.
+
+This behaves like a traditional e-commerce product.
+
+The uploaded image becomes the product cover.
+
+---
+
+### Option 3 — Video + Custom Cover Image
+
+The seller uploads:
+
+* Product Video
+* Separate Product Image
+
+The uploaded image becomes the official cover image while the video remains available for customers to watch.
+
+This works similarly to YouTube where creators upload a custom thumbnail.
+
+---
+
+# Supported Media
+
+Support common formats including:
+
+Videos
+
+* MP4
+* MOV
+* WEBM
+
+Images
+
+* JPG
+* JPEG
+* PNG
+* WEBP
+
+---
+
+# Step 2 — Lightweight Built-in Video Editor
+
+If the uploaded media contains a video, a lightweight editor should automatically open before the product is saved.
+
+The editor should not attempt to compete with professional editing software.
+
+Instead, it should provide only the tools that are genuinely useful for business owners.
+
+---
+
+## Feature 1 — Trim Video
+
+The seller should be able to drag the beginning and end of the timeline.
+
+Purpose:
+
+Many sellers begin recording before the product is fully visible or continue recording after finishing.
+
+This feature allows them to keep only the useful section.
+
+Example
+
+Original Video
+
+2 minutes
+
+Trimmed Video
+
+37 seconds
+
+Only the relevant product showcase remains.
+
+---
+
+## Feature 2 — Mute Audio
+
+Include a simple toggle:
+
+🔇 Remove Audio
+
+Some videos contain:
+
+* Background conversations
+* Television sounds
+* Music
+* Environmental noise
+
+Muting the audio should preserve the video while removing all sound.
+
+---
+
+## Feature 3 — Video Preview
+
+Before saving, the seller should preview exactly what customers will see.
+
+The preview should include:
+
+* Trimmed video
+* Muted audio (if selected)
+* Final playback
+
+---
+
+## Feature 4 — Automatic Compression
+
+After editing, the application should automatically compress the video while preserving visual quality.
+
+Goals:
+
+* Faster loading
+* Reduced storage
+* Better performance on mobile networks
+
+Compression should happen automatically without requiring user interaction.
+
+---
+
+# Step 3 — Product Cover Selection
+
+Every product requires a cover image.
+
+The seller should have three options.
+
+---
+
+## Option A — Automatic Thumbnail
+
+The system automatically extracts a clear frame from the video.
+
+No action is required.
+
+This serves as the default option.
+
+---
+
+## Option B — Choose Frame From Video
+
+Provide a timeline of video frames.
+
+The seller scrolls through the frames.
+
+After finding the best angle, they tap:
+
+Use This Frame
+
+The selected frame becomes the product cover.
+
+---
+
+## Option C — Upload Custom Cover Image
+
+Allow the seller to upload a completely separate image.
+
+This behaves exactly like YouTube custom thumbnails.
+
+The uploaded image replaces the automatically generated thumbnail.
+
+This is useful when the seller already has a professionally taken product photo.
+
+---
+
+# Step 4 — Product Information
+
+After media is finalized, collect product information.
+
+Required Fields
+
+* Product Name
+* Price
+* Category
+* Description
+* Quantity in Stock
+
+Optional Fields
+
+* Brand
+* Discount
+* Product Weight
+* Available Colors
+* Available Sizes
+* Material
+* Product Tags
+
+---
+
+# Step 5 — Save Product
+
+When saving, the application stores:
+
+Original Video
+
+Edited Video
+
+Cover Image
+
+Product Details
+
+Date Created
+
+Seller Information
+
+Inventory Information
+
+The original upload should remain available internally in case the seller wants to edit the product later.
+
+---
+
+# Customer Experience
+
+When customers browse products:
+
+They first see the cover image.
+
+If the product includes a video, display a small Play icon.
+
+Clicking the product opens the product page.
+
+Customers can:
+
+View images
+
+Watch the product video
+
+Read the description
+
+View price
+
+Select variations
+
+Add to cart
+
+Share product
+
+Contact seller through WhatsApp
+
+---
+
+# Future Feature — Multi-Product Creator
+
+This feature is designed for sellers who record one long video containing multiple products.
+
+Example
+
+One three-minute video contains:
+
+Handbag
+
+Shoes
+
+Necklace
+
+Watch
+
+Perfume
+
+Instead of uploading five different videos, the seller uploads the recording once.
+
+The application then allows them to repeatedly create product listings from different sections of the same video.
+
+Workflow
+
+Upload one video.
+
+Select "Create Product From Clip."
+
+Trim the section showing Product A.
+
+Choose or upload a cover image.
+
+Enter product details.
+
+Save Product A.
+
+Repeat the process for Product B, Product C, and so on.
+
+The original uploaded video remains available until all desired products have been created.
+
+Benefits
+
+One recording session can generate multiple independent product listings.
+
+This reduces upload time, storage usage, and repetitive work while matching how many WhatsApp businesses already record their products.
+
+---
+
+# Future AI Enhancements (Optional)
+
+AI should never be required for the core workflow.
+
+However, optional AI features can improve convenience.
+
+Potential AI features include:
+
+* Suggesting the clearest frame for the cover image.
+* Detecting blurry or low-quality thumbnails.
+* Recommending the best clip based on product visibility.
+* Auto-generating short product descriptions from the seller's voice or captions.
+* Automatically removing silent or irrelevant sections of the video.
+* Background removal or enhancement for cover images.
+
+These features should remain optional so the application works perfectly without AI.
+
+---
+
+# Design Principles
+
+The entire experience should follow these principles:
+
+* Mobile-first design.
+* Beginner-friendly interface.
+* Large touch-friendly controls.
+* Minimal learning curve.
+* Fast loading.
+* Smooth animations.
+* Clean, premium visual design.
+* Professional e-commerce appearance.
+* WhatsApp-inspired simplicity.
+* Every action should require as few taps as possible.
+
+The final experience should feel effortless for business owners while giving customers a polished, trustworthy, and engaging shopping experience.

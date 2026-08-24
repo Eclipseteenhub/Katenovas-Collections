@@ -1,0 +1,493 @@
+# Smart Order Management & Delivery Communication System
+
+## Objective
+
+Design a complete order management system that allows the business owner to monitor every order from the moment a customer clicks **Place Order** until the product has been successfully delivered.
+
+The goal is to eliminate confusion, reduce missed orders, improve communication with customers, and provide a professional shopping experience without requiring the seller to constantly switch between multiple applications.
+
+The system should be designed specifically for small businesses that communicate primarily through WhatsApp while maintaining the experience of a modern e-commerce platform.
+
+---
+
+# Real-Time Order Notifications
+
+The seller should never have to refresh the dashboard to know that a customer has placed an order.
+
+Whenever a customer successfully completes checkout, the system should immediately notify the seller.
+
+Notifications should appear:
+
+* Inside the Admin Dashboard
+* As an optional email notification
+* As an optional WhatsApp notification (future feature)
+* As a push notification if a mobile app is built later
+
+Example notification:
+
+🛒 New Order Received
+
+Order #1048
+
+Customer:
+Sarah Johnson
+
+Amount:
+₦28,500
+
+Items:
+3
+
+Payment:
+Successful
+
+Time:
+2:43 PM
+
+The notification should remain visible until the seller acknowledges it.
+
+---
+
+# Notification Center
+
+Create a notification center that stores important business events.
+
+Examples:
+
+🛒 New order received
+
+💳 Payment successful
+
+❌ Payment failed
+
+📦 Order marked as shipped
+
+🚚 Delivery completed
+
+⭐ Customer left a review
+
+⚠ Low stock warning
+
+📢 New customer registered
+
+Notifications should support:
+
+Unread status
+
+Read status
+
+Mark all as read
+
+Filter by type
+
+Search
+
+---
+
+# Order Management Dashboard
+
+The dashboard should display a complete overview of all orders.
+
+Summary cards:
+
+New Orders
+
+Awaiting Payment
+
+Paid Orders
+
+Preparing Orders
+
+Ready for Dispatch
+
+Out for Delivery
+
+Delivered
+
+Cancelled
+
+Refunded
+
+Each card should be clickable to display only that category.
+
+---
+
+# Order Details Page
+
+Opening an order should display every piece of information required to fulfill it.
+
+Customer Information
+
+Full Name
+
+Phone Number
+
+Email Address
+
+Delivery Address
+
+Delivery Instructions
+
+Order Information
+
+Order Number
+
+Order Date
+
+Payment Status
+
+Payment Reference
+
+Payment Method
+
+Items Ordered
+
+Quantity
+
+Price
+
+Discount
+
+Shipping Fee
+
+Total Amount
+
+Estimated Delivery Date
+
+---
+
+# Internal Seller Notes
+
+The seller should be able to add private notes that customers cannot see.
+
+Examples:
+
+Customer requested blue packaging.
+
+Customer called to change delivery address.
+
+Waiting for supplier.
+
+Customer prefers afternoon delivery.
+
+These notes remain visible only to admins.
+
+---
+
+# Order Progress Tracking
+
+Every order should move through clearly defined stages.
+
+1. Order Received
+
+Customer has successfully placed an order.
+
+2. Payment Confirmed
+
+Payment has been verified.
+
+3. Preparing Order
+
+Items are being packaged.
+
+4. Ready for Dispatch
+
+Package is ready for pickup.
+
+5. Out for Delivery
+
+Package has left the store.
+
+6. Delivered
+
+Customer has received the order.
+
+7. Completed
+
+Transaction is fully finished.
+
+Additional statuses:
+
+Awaiting Payment
+
+Cancelled
+
+Refund Requested
+
+Refunded
+
+Failed Delivery
+
+Returned
+
+Each status should have its own color for quick recognition.
+
+Changing a status should automatically update customer tracking.
+
+---
+
+# Customer Order Tracking
+
+Customers should have their own tracking page.
+
+Instead of repeatedly asking:
+
+"My order nko?"
+
+They can simply open their account and see:
+
+✔ Order Received
+
+✔ Payment Confirmed
+
+✔ Preparing
+
+✔ Ready for Dispatch
+
+🚚 Out for Delivery
+
+Estimated arrival:
+
+Tomorrow before 5 PM
+
+Completed steps should be visually highlighted.
+
+Current step should animate slightly.
+
+Future steps should remain inactive.
+
+---
+
+# Customer Communication
+
+Every order should include a communication panel.
+
+Quick actions:
+
+Call Customer
+
+Open WhatsApp Conversation
+
+Send Email
+
+Copy Phone Number
+
+Copy Address
+
+This allows the seller to contact customers with one tap.
+
+---
+
+# Quick Message Templates
+
+Instead of typing the same messages repeatedly, provide templates.
+
+Examples:
+
+Hello! We have received your order and will begin preparing it shortly.
+
+Your package has been packaged and is ready for dispatch.
+
+Your order is currently out for delivery.
+
+Your package has been successfully delivered.
+
+We attempted delivery but could not reach you.
+
+Messages should be editable before sending.
+
+---
+
+# Shipping Information
+
+Allow the seller to enter:
+
+Courier Name
+
+Tracking Number
+
+Dispatch Date
+
+Estimated Delivery Date
+
+Shipping Cost
+
+Delivery Notes
+
+Customers should see this information from their tracking page.
+
+---
+
+# Payment Integration
+
+Integrate Paystack into the order lifecycle.
+
+When payment succeeds:
+
+Automatically:
+
+Mark payment as Successful
+
+Generate transaction record
+
+Create order
+
+Notify seller
+
+Notify customer
+
+Move order to "Payment Confirmed"
+
+No manual confirmation should be required for online payments.
+
+---
+
+# Inventory Synchronization
+
+After payment:
+
+Reduce stock automatically.
+
+If stock becomes low:
+
+Notify seller.
+
+If stock reaches zero:
+
+Mark product as Out of Stock.
+
+Prevent additional purchases.
+
+---
+
+# Admin Timeline
+
+Every order should include a complete activity timeline.
+
+Example:
+
+2:10 PM
+
+Order Created
+
+2:11 PM
+
+Payment Successful
+
+2:16 PM
+
+Preparing Order
+
+4:20 PM
+
+Ready for Dispatch
+
+Next Day
+
+Out for Delivery
+
+Next Day
+
+Delivered
+
+This timeline provides a complete audit trail.
+
+---
+
+# Search & Filters
+
+The seller should quickly locate any order.
+
+Search by:
+
+Customer Name
+
+Order Number
+
+Phone Number
+
+Transaction Reference
+
+Product Name
+
+Filter by:
+
+Date
+
+Payment Status
+
+Order Status
+
+Delivery Status
+
+Courier
+
+Amount
+
+---
+
+# Reports & Analytics
+
+Dashboard charts should include:
+
+Today's Orders
+
+Weekly Orders
+
+Monthly Orders
+
+Revenue
+
+Average Order Value
+
+Top Customers
+
+Best Selling Products
+
+Payment Success Rate
+
+Delivery Success Rate
+
+Cancelled Orders
+
+Refund Rate
+
+---
+
+# Future Enhancements
+
+Barcode or QR code for each order.
+
+Scan package before dispatch.
+
+Delivery staff portal.
+
+Customer digital signature on delivery.
+
+Proof-of-delivery photo upload.
+
+Automatic invoice generation.
+
+Loyalty points after successful delivery.
+
+Coupon rewards for repeat customers.
+
+Integration with multiple logistics providers.
+
+Automatic WhatsApp updates whenever an order status changes.
+
+---
+
+# Design Principles
+
+The system should be designed so that the seller can manage the entire business from one dashboard.
+
+The interface should be clean, fast, mobile-friendly, beginner-friendly, and require minimal training.
+
+Every important action should require as few taps as possible.
+
+The customer should always know the current order status.
+
+The seller should always know what needs attention next.
+
+The entire workflow should create confidence, reduce manual work, improve communication, and make both the seller and the customer feel that every order is being handled professionally from purchase to delivery.

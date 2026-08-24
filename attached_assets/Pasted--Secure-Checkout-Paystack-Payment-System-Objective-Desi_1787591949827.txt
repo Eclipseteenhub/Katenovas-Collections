@@ -1,0 +1,379 @@
+# Secure Checkout & Paystack Payment System
+
+## Objective
+
+Design a secure, trustworthy, and user-friendly checkout experience powered by Paystack.
+
+The checkout process should guide customers from reviewing their cart to completing payment while giving both the customer and the seller confidence that every transaction is safe, transparent, and properly tracked.
+
+The payment workflow should integrate seamlessly with inventory, order management, notifications, and customer communication.
+
+---
+
+# Step 1 — Shopping Cart Review
+
+Before checkout, customers should review their cart.
+
+Display:
+
+* Product Image
+* Product Name
+* Selected Color
+* Selected Size
+* Quantity
+* Unit Price
+* Subtotal
+
+Cart Summary
+
+* Items Total
+* Discount (if applicable)
+* Delivery Fee
+* Taxes (if applicable)
+* Grand Total
+
+Allow customers to:
+
+Increase quantity
+
+Decrease quantity
+
+Remove items
+
+Continue shopping
+
+Proceed to Checkout
+
+---
+
+# Step 2 — Customer Information
+
+Collect:
+
+Full Name
+
+Email Address
+
+Phone Number
+
+Delivery Address
+
+State
+
+City
+
+Nearest Landmark
+
+Delivery Instructions (Optional)
+
+Allow registered users to save addresses for future purchases.
+
+---
+
+# Step 3 — Delivery Method
+
+Allow the customer to choose:
+
+Home Delivery
+
+Store Pickup (if available)
+
+Display:
+
+Estimated delivery time
+
+Delivery cost
+
+Available delivery areas
+
+---
+
+# Step 4 — Order Review
+
+Before payment, present a complete order summary.
+
+Products
+
+Delivery Address
+
+Delivery Method
+
+Estimated Arrival
+
+Payment Method
+
+Final Amount
+
+The customer must explicitly confirm the order before proceeding.
+
+---
+
+# Step 5 — Secure Paystack Checkout
+
+When the customer taps:
+
+Pay Securely
+
+The application should initialize a Paystack transaction.
+
+Pass:
+
+Customer email
+
+Customer name
+
+Phone number
+
+Amount
+
+Currency (NGN)
+
+Unique transaction reference
+
+Order reference
+
+Metadata (order ID, customer ID, cart details)
+
+The customer is redirected to Paystack's secure payment page or embedded checkout.
+
+Supported payment methods include:
+
+Debit Cards
+
+Bank Transfer
+
+USSD
+
+Mobile Money (where supported)
+
+Apple Pay / Google Pay (where available)
+
+Customers should never enter card details directly into the application's servers.
+
+All sensitive payment processing should be handled by Paystack.
+
+---
+
+# Step 6 — Payment Verification
+
+After payment, the application must verify the transaction directly with Paystack.
+
+Never rely solely on the redirect URL.
+
+Verification should confirm:
+
+Transaction Reference
+
+Payment Status
+
+Amount Paid
+
+Currency
+
+Customer Email
+
+Payment Time
+
+Verification must occur on the backend before confirming the order.
+
+---
+
+# Step 7 — Successful Payment Workflow
+
+Once payment has been successfully verified:
+
+Automatically:
+
+Create the order.
+
+Reserve or reduce inventory.
+
+Generate an invoice.
+
+Generate a receipt.
+
+Record the transaction.
+
+Update analytics.
+
+Notify the seller.
+
+Notify the customer.
+
+Move the order to "Payment Confirmed."
+
+Display a success screen with:
+
+Payment Successful
+
+Order Number
+
+Transaction Reference
+
+Estimated Delivery Date
+
+Track Order button
+
+Continue Shopping button
+
+---
+
+# Step 8 — Failed or Cancelled Payments
+
+If payment fails or is cancelled:
+
+Do not create a confirmed order.
+
+Restore reserved stock if necessary.
+
+Display a friendly message explaining that payment was not completed.
+
+Allow the customer to retry payment without rebuilding the cart.
+
+---
+
+# Transaction Records
+
+Every payment should store:
+
+Order ID
+
+Customer ID
+
+Paystack Reference
+
+Amount
+
+Currency
+
+Payment Method
+
+Payment Status
+
+Verification Status
+
+Date & Time
+
+IP Address (optional)
+
+Gateway Response
+
+Webhook Event ID (optional)
+
+---
+
+# Admin Dashboard Integration
+
+Every successful payment should instantly appear in the admin dashboard.
+
+Display:
+
+Customer Name
+
+Order Number
+
+Amount
+
+Payment Method
+
+Status
+
+Time
+
+Transaction Reference
+
+The seller should not need to log into Paystack for routine order management.
+
+---
+
+# Customer Trust Features
+
+Display trust indicators throughout checkout:
+
+Secure payments powered by Paystack.
+
+SSL-secured checkout.
+
+Order tracking after purchase.
+
+Instant payment confirmation.
+
+Customer support available before and after payment.
+
+Clear refund and return policy.
+
+Visible business contact information.
+
+These reassure first-time buyers and reduce checkout abandonment.
+
+---
+
+# Error Handling
+
+Handle situations such as:
+
+Network interruptions
+
+Duplicate payment attempts
+
+Browser refreshes
+
+Webhook delays
+
+Payment verification failures
+
+The system should prevent duplicate orders and duplicate charges.
+
+---
+
+# Security Requirements
+
+Never store card information.
+
+Always verify payments on the backend.
+
+Use Paystack webhooks to receive transaction updates.
+
+Validate webhook signatures.
+
+Protect all payment endpoints.
+
+Log all payment events for auditing.
+
+Prevent duplicate transaction processing.
+
+---
+
+# Future Enhancements
+
+Save payment methods (where supported).
+
+One-click checkout for returning customers.
+
+Coupon and gift card support.
+
+Split payments.
+
+Installment payments (if supported).
+
+Subscription billing.
+
+Multi-currency support.
+
+Business wallet and loyalty rewards.
+
+---
+
+# Design Principles
+
+The checkout should feel simple, fast, secure, and trustworthy.
+
+Customers should never wonder:
+
+"Did my payment go through?"
+
+The seller should never wonder:
+
+"Did I really receive this payment?"
+
+Every successful transaction should immediately become a managed order with full tracking, clear communication, and complete transparency for both the customer and the business owner.

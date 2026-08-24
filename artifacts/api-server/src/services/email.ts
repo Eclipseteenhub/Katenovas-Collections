@@ -279,3 +279,20 @@ export async function testConnection(): Promise<EmailResult> {
     "test",
   );
 }
+
+export async function sendManualEmail(input: {
+  recipient: string;
+  subject: string;
+  message: string;
+}): Promise<EmailResult> {
+  const messageHtml = escapeHtml(input.message).replace(/\r?\n/g, "<br/>");
+  return safeSend(
+    {
+      from: FROM,
+      to: input.recipient,
+      subject: input.subject,
+      html: baseTemplate(input.subject, `<p>${messageHtml}</p>`),
+    },
+    "manual",
+  );
+}

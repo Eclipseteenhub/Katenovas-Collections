@@ -1,0 +1,497 @@
+# AI Shopping Assistant & Intelligent Customer Support System
+
+## Objective
+
+Design a modern AI-powered customer support system that feels like a friendly in-store sales assistant.
+
+The AI should answer customer questions instantly, reduce the seller's workload, build trust with first-time visitors, and improve the overall shopping experience.
+
+The AI should **assist the business owner, not replace them**.
+
+Customers must always have the ability to speak directly with a human whenever they choose.
+
+The experience should feel welcoming, conversational, intelligent, and effortless.
+
+---
+
+# Core Philosophy
+
+The AI is an employee.
+
+The business owner is the manager.
+
+The AI handles repetitive work.
+
+The business owner handles important conversations.
+
+The customer should never feel trapped talking to a bot.
+
+---
+
+# AI Assistant
+
+The AI assistant should appear throughout the website.
+
+Examples:
+
+Need help?
+
+Ask me anything.
+
+How can I help you today?
+
+The chat interface should feel modern, warm, and friendly.
+
+---
+
+# AI Knowledge Base
+
+The AI should answer questions using business information provided by the admin.
+
+Examples:
+
+Store information
+
+Business hours
+
+Delivery locations
+
+Delivery prices
+
+Estimated delivery times
+
+Available payment methods
+
+Return policy
+
+Exchange policy
+
+Frequently Asked Questions
+
+Product information
+
+Available colours
+
+Available sizes
+
+Materials
+
+Stock availability
+
+Current promotions
+
+Store announcements
+
+The AI must never invent business information.
+
+If it does not know the answer, it should clearly say so and offer to connect the customer with the seller.
+
+---
+
+# Product Intelligence
+
+When customers ask:
+
+Do you have this in black?
+
+Does this come in XL?
+
+Is this available?
+
+The AI should search the product database and answer using real product information.
+
+The AI should recommend similar products if the requested item is unavailable.
+
+---
+
+# Smart Recommendations
+
+The AI should act like a sales assistant.
+
+Examples:
+
+Customers viewing handbags may also like matching purses.
+
+Customers buying jewellery may also like matching necklaces.
+
+Customers interested in a dress may also like matching shoes.
+
+Recommendations should be based on products actually available.
+
+---
+
+# Delivery Assistant
+
+The AI should answer delivery questions.
+
+Examples:
+
+Do you deliver to Ibadan?
+
+How much is delivery to Abuja?
+
+How long does delivery take?
+
+Can I pick up my order?
+
+The AI should use real delivery settings configured by the admin.
+
+---
+
+# Payment Assistant
+
+The AI should answer:
+
+How do I pay?
+
+Is Paystack safe?
+
+Can I pay with transfer?
+
+Will I receive a receipt?
+
+Can I pay later?
+
+The AI should explain the business payment process accurately.
+
+---
+
+# Order Assistant
+
+Registered customers should be able to ask:
+
+Where is my order?
+
+Has my payment been confirmed?
+
+When will my package arrive?
+
+The AI should securely retrieve the customer's order information and provide updates.
+
+Customers must only be able to access their own orders.
+
+---
+
+# Human Assistance
+
+Every AI conversation should display a visible option:
+
+Talk to Seller
+
+Customers should never be forced to continue chatting with AI.
+
+One tap should create a conversation with the seller.
+
+---
+
+# Contact Preferences
+
+When requesting human assistance, customers should provide or confirm their preferred contact method.
+
+Options:
+
+WhatsApp
+
+Phone Call
+
+Email
+
+In-App Chat
+
+The customer should also specify the best time to contact them if desired.
+
+Example:
+
+Morning
+
+Afternoon
+
+Evening
+
+Any Time
+
+---
+
+# Customer Sign-Up
+
+During account creation, collect optional contact preferences.
+
+Preferred Contact Method
+
+Primary Phone Number
+
+WhatsApp Number (if different)
+
+Email Address
+
+Preferred Communication Time
+
+These preferences help the seller communicate more effectively.
+
+---
+
+# Seller Inbox
+
+Create a unified communication center.
+
+The seller should receive:
+
+New chat requests
+
+AI escalations
+
+Customer replies
+
+Order questions
+
+Support requests
+
+Everything should appear in one inbox.
+
+Each conversation should display:
+
+Customer Name
+
+Related Product
+
+Related Order
+
+Priority
+
+Unread Status
+
+Last Activity
+
+---
+
+# Email Integration
+
+The application should send email notifications to the seller for important events.
+
+Examples:
+
+New Order
+
+Payment Received
+
+Customer requested human assistance
+
+Customer sent a new message
+
+Low Stock Warning
+
+Refund Request
+
+The email should include a direct link to the relevant page inside the admin dashboard.
+
+The seller should be able to respond later when convenient.
+
+---
+
+# AI Escalation
+
+The AI should automatically suggest human assistance when:
+
+The customer requests a human.
+
+The AI cannot answer confidently.
+
+The customer becomes frustrated.
+
+The customer asks account-specific questions requiring manual review.
+
+The customer asks about refunds or complaints.
+
+The customer asks for exceptions to store policy.
+
+---
+
+# Admin Reply Interface
+
+The seller should see:
+
+Customer profile
+
+Conversation history
+
+Related products
+
+Related orders
+
+Suggested AI reply (editable)
+
+Quick response templates
+
+The seller may:
+
+Reply
+
+Attach photos
+
+Attach videos
+
+Send voice notes (future)
+
+Share product links
+
+Share order tracking
+
+---
+
+# AI Draft Replies
+
+For every customer message, the AI should generate a suggested response.
+
+The seller can:
+
+Send as-is
+
+Edit before sending
+
+Discard
+
+This reduces typing while keeping the seller in control.
+
+---
+
+# Continuous Learning
+
+The AI should not automatically learn from every conversation.
+
+Instead, after conversations are completed, the system should identify useful knowledge.
+
+Examples:
+
+New frequently asked questions.
+
+Better explanations.
+
+New delivery information.
+
+Common sizing questions.
+
+The admin should receive suggestions such as:
+
+"This answer appears useful for future customers."
+
+Approve
+
+Edit
+
+Reject
+
+Only approved knowledge becomes part of the AI assistant.
+
+This prevents incorrect or private information from entering the knowledge base.
+
+---
+
+# AI Analytics
+
+Provide statistics such as:
+
+Questions answered by AI
+
+Questions escalated to seller
+
+Average response time
+
+Customer satisfaction
+
+Most common questions
+
+Most searched products
+
+Frequently requested delivery locations
+
+These insights help improve both the business and the AI assistant.
+
+---
+
+# Customer Experience
+
+The interface should feel welcoming and stress-free.
+
+The customer should always know:
+
+Who they are talking to.
+
+Whether they are chatting with AI or the seller.
+
+How to reach a human.
+
+When they can expect a reply.
+
+The transition from AI to human should feel seamless, with the seller able to see the full conversation so the customer never has to repeat themselves.
+
+---
+
+# Interface Design
+
+The interface should be exceptionally clean and beginner-friendly.
+
+Large buttons.
+
+Clear icons.
+
+Soft animations.
+
+Readable typography.
+
+Friendly language.
+
+Smooth transitions.
+
+Fast loading.
+
+Responsive on phones, tablets, and desktops.
+
+The chat experience should resemble modern messaging applications while maintaining a premium e-commerce appearance.
+
+---
+
+# Future AI Enhancements
+
+Voice conversations with AI.
+
+Image search:
+
+Customers upload a photo.
+
+The AI finds similar products.
+
+Visual outfit recommendations.
+
+Multilingual support.
+
+Voice note transcription.
+
+Automatic translation between customer and seller.
+
+Smart follow-up messages.
+
+Abandoned cart recovery.
+
+Personalized product recommendations.
+
+Automatic review requests after successful delivery.
+
+Customer loyalty insights.
+
+Seasonal marketing suggestions for the seller.
+
+Sales forecasting.
+
+Inventory restocking predictions.
+
+Business performance insights.
+
+Marketing content generation for Facebook, Instagram, WhatsApp Status, and email campaigns.
+
+---
+
+# Final Vision
+
+The application should feel like every customer walks into a physical boutique where a knowledgeable assistant immediately welcomes them, answers their questions, recommends products, helps them complete their purchase, and introduces them to the owner whenever personal assistance is needed.
+
+The seller should feel like she has hired a reliable digital employee who works 24 hours a day, never forgets important information, handles repetitive tasks, assists with customer service, supports sales, and allows her to focus on running and growing the business rather than constantly answering the same questions.

@@ -42,6 +42,9 @@ async function patchOrder(id, data) {
 
 async function fetchEmailLogs() { return apiFetch('/email-logs'); }
 async function sendTestEmail() { return apiFetch('/email-logs/test', { method: 'POST' }); }
+async function sendManualEmail(data) {
+  return apiFetch('/email-logs/send', { method: 'POST', body: JSON.stringify(data) });
+}
 
 /* ─── Auth helpers ────────────────────── */
 
@@ -80,6 +83,70 @@ function safeImageSrc(value) {
     return escHtml(image);
   }
   return '';
+}
+
+const EMAIL_TEMPLATES = {
+  order: ['Order update from Katenovas Collections', 'Hello! We have received your order and will begin preparing it shortly. We will keep you updated as it moves through delivery.'],
+  delay: ['Update about your delivery', 'Hello! We are sorry, but your delivery is taking a little longer than expected. We will update you as soon as we have a confirmed delivery time.'],
+  stock: ['Important update about your order', 'Hello! We are sorry to let you know that an item in your order is currently out of stock. Please reply so we can arrange a replacement or refund.'],
+  payment: ['Payment reminder', 'Hello! This is a friendly reminder that your order is awaiting payment. Please contact us if you need any help completing checkout.'],
+  thanks: ['Thank you for shopping with us', 'Hello! Thank you for choosing Katenovas Collections. We truly appreciate your order and hope you love it.'],
+  refund: ['Update about your refund', 'Hello! We are writing to update you about your refund request. Please reply to this email if you have any questions.'],
+  promotion: ['A special offer from Katenovas Collections', 'Hello! We have a special offer available for you. Reply to this email or contact us on WhatsApp for details.'],
+};
+
+function closeEmailComposer() {
+  document.getElementById('emailComposerModal')?.classList.add('hidden');
+  document.getElementById('emailPreview')?.classList.add('hidden');
+}
+
+function initEmailComposer() {
+  const modal = document.getElementById('emailComposerModal');
+  const form = document.getElementById('emailComposerForm');
+  const template = document.getElementById('emailTemplate');
+  const subject = document.getElementById('emailSubject');
+  const message = document.getElementById('emailMessage');
+  if (!modal || !form || !template || !subject || !message) return;
+
+  document.getElementById('composeEmailBtn')?.addEventListener('click', () => {
+    form.reset();
+    modal.classList.remove('hidden');
+    document.getElementById('emailRecipient')?.focus();
+  });
+  document.getElementById('closeEmailComposer')?.addEventListener('click', closeEmailComposer);
+  document.getElementById('cancelEmailComposer')?.addEventListener('click', closeEmailComposer);
+  modal.addEventListener('click', event => { if (event.target === modal) closeEmailComposer(); });
+  template.addEventListener('change', () => {
+    const selected = EMAIL_TEMPLATES[template.value];
+    if (selected) { subject.value = selected[0]; message.value = selected[1]; }
+  });
+  document.getElementById('previewEmailBtn')?.addEventListener('click', () => {
+    document.getElementById('emailPreviewSubject').textContent = subject.value || '(No subject)';
+    document.getElementById('emailPreviewMessage').textContent = message.value || '(No message)';
+    document.getElementById('emailPreview').classList.remove('hidden');
+  });
+  form.addEventListener('submit', async event => {
+    event.preventDefault();
+    const recipient = document.getElementById('emailRecipient').value.trim();
+    if (!recipient || !subject.value.trim() || !message.value.trim()) {
+      showToast('Recipient, subject, and message are required.', 'error');
+      return;
+    }
+    const button = document.getElementById('sendManualEmailBtn');
+    button.disabled = true;
+    button.textContent = 'Sending…';
+    try {
+      await sendManualEmail({ recipient, subject: subject.value.trim(), message: message.value.trim() });
+      showToast('Email sent successfully.');
+      closeEmailComposer();
+      renderEmailLogs();
+    } catch (error) {
+      showToast(error.message || 'Could not send email.', 'error');
+    } finally {
+      button.disabled = false;
+      button.textContent = 'Send Email';
+    }
+  });
 }
 
 /* ─── Toast ───────────────────────────── */
@@ -633,6 +700,7 @@ async function initDashboardPage() {
   });
 
   document.getElementById('refreshEmailLogsBtn')?.addEventListener('click', () => renderEmailLogs());
+  initEmailComposer();
 }
 
 /* ─── Page init ───────────────────────── */

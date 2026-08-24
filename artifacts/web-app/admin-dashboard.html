@@ -70,6 +70,7 @@
         <div class="admin-tab-panel hidden" data-tab-panel="email-logs">
           <div class="admin-orders-toolbar" style="display:flex;align-items:center;gap:12px;">
             <h2 style="margin:0;font-size:1.1rem;color:var(--crimson)">Email Activity Log</h2>
+            <button id="composeEmailBtn" class="btn btn-gold btn-sm">Compose Email</button>
             <button id="testEmailBtn" class="btn btn-outline btn-sm">Send Test Email</button>
             <button id="refreshEmailLogsBtn" class="btn btn-outline btn-sm" style="margin-left:auto">Refresh</button>
           </div>
@@ -194,6 +195,54 @@
         <div class="form-actions">
           <button id="cancelNotes" class="btn btn-outline">Cancel</button>
           <button id="saveNotes" class="btn btn-gold">Save Notes</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Manual Email Composer -->
+    <div id="emailComposerModal" class="modal-overlay hidden">
+      <div class="modal modal-wide">
+        <div class="modal-header">
+          <h2>Compose Email</h2>
+          <button id="closeEmailComposer" class="modal-close" aria-label="Close">&times;</button>
+        </div>
+        <form id="emailComposerForm" novalidate>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="emailRecipient">Recipient</label>
+              <input type="email" id="emailRecipient" required maxlength="254" placeholder="customer@example.com" />
+            </div>
+            <div class="form-group">
+              <label for="emailTemplate">Quick template</label>
+              <select id="emailTemplate">
+                <option value="custom">Custom Message</option>
+                <option value="order">Order Update</option>
+                <option value="delay">Delivery Delay</option>
+                <option value="stock">Out of Stock</option>
+                <option value="payment">Payment Reminder</option>
+                <option value="thanks">Thank You</option>
+                <option value="refund">Refund Update</option>
+                <option value="promotion">Promotion or Discount</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="emailSubject">Subject</label>
+            <input type="text" id="emailSubject" required maxlength="200" />
+          </div>
+          <div class="form-group">
+            <label for="emailMessage">Message</label>
+            <textarea id="emailMessage" rows="10" required maxlength="20000" placeholder="Write your message..."></textarea>
+          </div>
+          <div class="form-actions">
+            <button type="button" id="previewEmailBtn" class="btn btn-outline">Preview Email</button>
+            <button type="button" id="cancelEmailComposer" class="btn btn-outline">Cancel</button>
+            <button type="submit" id="sendManualEmailBtn" class="btn btn-gold">Send Email</button>
+          </div>
+        </form>
+        <div id="emailPreview" class="hidden" style="margin-top:16px;padding:18px;border:1px solid #eadfd5;border-radius:8px;background:#fffaf6;">
+          <strong id="emailPreviewSubject"></strong>
+          <p id="emailPreviewMessage" style="white-space:pre-wrap;margin-top:12px;"></p>
         </div>
       </div>
     </div>
