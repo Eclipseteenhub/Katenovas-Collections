@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Track Order — Katenovas Collections</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css?v=4" />
+  </head>
+  <body>
+
+    <header class="site-header">
+      <div class="header-inner">
+        <a href="index.html" class="brand-logo">
+          <img src="assets/images/logo.png" alt="Katenovas Collections" class="brand-logo-img" />
+        </a>
+        <button class="nav-toggle" id="navToggle" aria-label="Open menu">&#9776;</button>
+        <nav class="site-nav" id="siteNav">
+          <button class="nav-close" id="navClose" aria-label="Close menu">&times;</button>
+          <a href="index.html" class="nav-link">Home</a>
+          <a href="products.html" class="nav-link">Products</a>
+          <a href="cart.html" class="nav-link cart-link">
+            Cart <span class="cart-badge" id="cartBadge">0</span>
+          </a>
+          <a href="about.html" class="nav-link">About</a>
+          <a href="contact.html" class="nav-link">Contact</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="page-main">
+      <div class="container container-narrow">
+        <h1 class="page-title">Track Your Order</h1>
+        <p style="text-align:center;color:var(--gray);margin:-1rem 0 1.5rem;">Enter your Paystack reference sent to your email.</p>
+
+        <div class="checkout-form-card" style="margin-bottom:1.5rem;">
+          <div class="form-group">
+            <label for="trackInput">Order Reference</label>
+            <input id="trackInput" type="text" placeholder="kc_... or paystack reference" />
+          </div>
+          <button id="trackBtn" class="btn btn-gold btn-full">Track Order</button>
+        </div>
+
+        <div id="trackResult" class="hidden">
+          <div id="trackStatusBox" class="order-status-page" style="margin:0 auto 1.5rem;">
+            <div class="order-status-icon">📦</div>
+            <h1 id="trackTitle">Order Status</h1>
+            <p id="trackMessage"></p>
+            <code id="trackRef" class="order-ref"></code>
+            <div id="trackCourier" style="font-size:0.9rem;color:var(--gray);margin-top:0.75rem;"></div>
+          </div>
+
+          <div class="checkout-summary-card">
+            <h2>Order Timeline</h2>
+            <div id="trackTimeline" style="display:flex;flex-direction:column;gap:0.75rem;margin-top:1rem;"></div>
+          </div>
+        </div>
+
+        <p id="trackError" class="hidden" style="text-align:center;color:var(--red);margin-top:1rem;"></p>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container">
+        <p class="brand-name-footer">Katenovas Collections</p>
+        <nav class="footer-nav">
+          <a href="index.html">Home</a>
+          <a href="products.html">Products</a>
+          <a href="cart.html">Cart</a>
+          <a href="about.html">About Us</a>
+          <a href="contact.html">Contact</a>
+        </nav>
+        <nav class="footer-nav-secondary">
+          <a href="privacy-policy.html">Privacy Policy</a>
+          <a href="terms.html">Terms &amp; Conditions</a>
+          <a href="refund-policy.html">Refund &amp; Return Policy</a>
+          <a href="shipping-policy.html">Shipping &amp; Delivery Policy</a>
+        </nav>
+        <p class="footer-tagline">Worldwide delivery &bull; Here for you 24/7</p>
+        <nav class="footer-social">
+          <a href="https://www.tiktok.com/@katenovascollections?_r=1&amp;_t=ZS-97rfO7pMANs" target="_blank" rel="noopener">TikTok</a>
+        </nav>
+        <p class="footer-contact">
+          &#128222; <a href="https://wa.me/2348025497647" target="_blank">+234 802 549 7647</a>
+          &nbsp;&bull;&nbsp;
+          &#9993; <a href="mailto:eghenovakate@gmail.com">eghenovakate@gmail.com</a>
+          <br>141, Uppermission Extension, Aduwawa, Benin City, Edo State, Nigeria 300211.
+        </p>
+        <p class="footer-copy">&copy; 2026 Katenovas Collections. All rights reserved.</p>
+      </div>
+    </footer>
+
+    <script type="module" src="app.js"></script>
+  </body>
+</html>

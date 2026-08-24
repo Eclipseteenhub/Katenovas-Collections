@@ -30,6 +30,11 @@ export const ordersTable = pgTable("orders", {
   paymentStatus: text("payment_status").notNull().default("pending"),
   orderStatus: text("order_status").notNull().default("Pending"),
   sellerNotes: text("seller_notes").default("").notNull(),
+  courierName: text("courier_name").default("").notNull(),
+  trackingNumber: text("tracking_number").default("").notNull(),
+  dispatchDate: timestamp("dispatch_date"),
+  estimatedDelivery: timestamp("estimated_delivery"),
+  shippingCost: numeric("shipping_cost", { precision: 12, scale: 2 }).default("0").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
