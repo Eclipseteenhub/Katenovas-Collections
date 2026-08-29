@@ -830,6 +830,8 @@ function initChatWidget() {
   }
 
 
+  let pendingHandoff = false;
+
   function openPanel() {
     isOpen = true;
     panel.classList.remove('hidden');
@@ -857,6 +859,37 @@ function initChatWidget() {
     const text = input.value.trim();
     if (!text) return;
     input.value = '';
+
+    // If handoff is pending, treat text as contact details
+    if (pendingHandoff) {
+      pendingHandoff = false;
+      addMsg('user', text);
+      const lines = text.split('\n').filter(Boolean).map(s => s.trim());
+      const custName = lines[0] || 'Customer';
+      const custPhone = lines[1] || '';
+      const custEmail = lines[2] || (lines[0]?.includes('@') ? lines[0] : 'customer@katenovas.app');
+      const history = messages.slice(-8).map(m => `${m.role}: ${m.content}`).join('\n');
+      try {
+        await fetch(KC.API_BASE + '/conversations/escalate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            customerName: custName,
+            customerEmail: custEmail,
+            customerPhone: custPhone,
+            subject: 'Help request from Kena chat',
+            message: 'Chat history:\n' + history,
+            contactPreference: 'WhatsApp',
+          })
+        });
+        addMsg('assistant', 'Your request has been sent to Kate! She will contact you on WhatsApp shortly. Tap the WhatsApp button in the header to start a conversation now.');
+      } catch {
+        addMsg('assistant', 'Could not send your request. Please WhatsApp us directly at +234 802 549 7647.');
+      }
+      setTimeout(() => { window.open(WA_URL, '_blank'); }, 1200);
+      return;
+    }
+
     addMsg('user', text);
 
 
@@ -884,7 +917,13 @@ function initChatWidget() {
 
 
       if (data.handoff) {
-        setTimeout(() => { window.open(WA_URL, '_blank'); }, 800);
+        // Ask for contact details, then create a seller-inbox conversation + open WhatsApp
+        addMsg('assistant', data.reply + '\n\nTo connect you with Kate, please type your name, phone/WhatsApp number, and email (one per line, e.g. "Jane\n08012345678\njane@mail.com").');
+        await new Promise(r => setTimeout(r, 200));
+        input.disabled = false;
+        sendBtn.disabled = false;
+        pendingHandoff = true;
+        input.focus();
       }
     } catch {
       document.getElementById(typingId)?.remove();

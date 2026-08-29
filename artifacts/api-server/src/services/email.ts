@@ -296,3 +296,78 @@ export async function sendManualEmail(input: {
     "manual",
   );
 }
+
+export type BusinessSummary = {
+  period: "daily" | "weekly";
+  revenue: number;
+  orders: number;
+  delivered: number;
+  cancelled: number;
+  paidOrders: number;
+  newCustomers: number;
+  topProducts: { name: string; qty: number }[];
+  lowStock: { name: string; stock: number }[];
+};
+
+export async function sendBusinessSummary(summary: BusinessSummary): Promise<EmailResult> {
+  const rows =
+    summary.topProducts.length > 0
+      ? `<table class="tbl"><tr><th>Product</th><th>Units</th></tr>${summary.topProducts
+          .map((p) => `<tr><td>${escapeHtml(p.name)}</td><td>${p.qty}</td></tr>`)
+          .join("")}</table>`
+      : "<p>No sales in this period.</p>";
+
+  const lowStockRows =
+    summary.lowStock.length > 0
+      ? `<ul style="font-size:14px;line-height:1.9;color:#c62828;">${summary.lowStock
+          .map((p) => `<li>${escapeHtml(p.name)} — only ${p.stock} left</li>`)
+          .join("")}</ul>`
+      : "<p>All stock levels are healthy.</p>";
+
+  const body = `
+    <h2>${summary.period === "daily" ? "Today's" : "This Week's"} Business Summary</h2>
+    <table class="tbl">
+      <tr><th>Metric</th><th>Value</th></tr>
+      <tr><td>💰 Revenue</td><td>${formatNaira(summary.revenue)}</td></tr>
+      <tr><td>🛒 Orders</td><td>${summary.orders}</td></tr>
+      <tr><td>💳 Paid Orders</td><td>${summary.paidOrders}</td></tr>
+      <tr><td>📦 Delivered</td><td>${summary.delivered}</td></tr>
+      <tr><td>❌ Cancelled</td><td>${summary.cancelled}</td></tr>
+      <tr><td>👤 New Customers</td><td>${summary.newCustomers}</td></tr>
+    </table>
+    <div class="divider"></div>
+    <h2>Top Products</h2>
+    ${rows}
+    <div class="divider"></div>
+    <h2>Low Stock Alerts</h2>
+    ${lowStockRows}
+  `;
+
+  const result = await safeSend(
+    {
+      from: FROM,
+      to: ADMIN_EMAIL,
+      subject: `📊 Katenovas ${summary.period === "daily" ? "Daily" : "Weekly"} Summary — ${formatNaira(summary.revenue)} revenue`,
+      html: baseTemplate("Business Summary", body),
+    },
+    summary.period === "daily" ? "daily_summary" : "weekly_summary",
+  );
+
+  // Log the summary email
+  try {
+    const { db, emailLogsTable } = await import("@workspace/db");
+    await db.insert(emailLogsTable).values({
+      id: "el_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8),
+      recipient: ADMIN_EMAIL,
+      subject: `Business Summary (${summary.period})`,
+      emailType: summary.period === "daily" ? "daily_summary" : "weekly_summary",
+      status: result.success ? "sent" : "failed",
+      errorMessage: result.error ?? "",
+      relatedOrderId: "",
+    });
+  } catch {
+    // ignore log failure
+  }
+
+  return result;
+}

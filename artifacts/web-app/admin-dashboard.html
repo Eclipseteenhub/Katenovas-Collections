@@ -40,6 +40,7 @@
         <div class="admin-tabs">
           <button class="admin-tab-btn active" data-tab="products">Products</button>
           <button class="admin-tab-btn" data-tab="orders">Orders</button>
+          <button class="admin-tab-btn" data-tab="inbox">Inbox <span id="inboxBadge" class="hidden" style="background:var(--red);color:white;font-size:0.65rem;border-radius:50%;padding:1px 5px;margin-left:4px;">0</span></button>
           <button class="admin-tab-btn" data-tab="email-logs">Email Logs</button>
         </div>
 
@@ -77,12 +78,46 @@
           <p id="noOrders" class="empty-message hidden">No orders yet.</p>
         </div>
 
+        <!-- Inbox Tab -->
+        <div class="admin-tab-panel hidden" data-tab-panel="inbox">
+          <div class="admin-orders-toolbar">
+            <h2 style="margin:0;font-size:1.1rem;color:var(--crimson)">Seller Inbox</h2>
+            <button id="refreshInboxBtn" class="btn btn-outline btn-sm" style="margin-left:auto">Refresh</button>
+          </div>
+          <p class="field-hint" style="margin-bottom:12px;">Messages from customers who requested human help (AI escalations) land here.</p>
+          <div id="adminConversationsList" class="admin-orders-list"></div>
+          <p id="noConversations" class="empty-message hidden">No conversations yet.</p>
+
+          <!-- Conversation detail -->
+          <div id="conversationDetail" class="hidden" style="margin-top:1rem;">
+            <div class="admin-order-row" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.5rem;">
+              <div>
+                <strong id="convCustomer"></strong>
+                <span id="convMeta" style="font-size:0.8rem;color:var(--gray);display:block;"></span>
+              </div>
+              <div style="display:flex;gap:0.5rem;">
+                <button id="closeConvBtn" class="btn btn-outline btn-sm">Close</button>
+                <button id="backInboxBtn" class="btn btn-ghost btn-sm">← Back</button>
+              </div>
+            </div>
+            <div id="convMessages" style="display:flex;flex-direction:column;gap:0.6rem;margin:1rem 0;max-height:340px;overflow:auto;background:#faf7f4;border:1px solid #eee;border-radius:10px;padding:1rem;"></div>
+            <div style="display:flex;gap:0.5rem;">
+              <textarea id="convReplyInput" rows="2" placeholder="Type your reply..." style="flex:1;padding:0.65rem;border:2px solid var(--light-gray);border-radius:8px;font-family:inherit;"></textarea>
+              <div style="display:flex;flex-direction:column;gap:0.4rem;">
+                <button id="aiDraftBtn" class="btn btn-ghost btn-sm">✨ AI Draft</button>
+                <button id="sendReplyBtn" class="btn btn-gold btn-sm">Send</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Email Logs Tab -->
         <div class="admin-tab-panel hidden" data-tab-panel="email-logs">
           <div class="admin-orders-toolbar" style="display:flex;align-items:center;gap:12px;">
             <h2 style="margin:0;font-size:1.1rem;color:var(--crimson)">Email Activity Log</h2>
             <button id="composeEmailBtn" class="btn btn-gold btn-sm">Compose Email</button>
             <button id="testEmailBtn" class="btn btn-outline btn-sm">Send Test Email</button>
+            <button id="summaryEmailBtn" class="btn btn-outline btn-sm">Send Business Summary</button>
             <button id="refreshEmailLogsBtn" class="btn btn-outline btn-sm" style="margin-left:auto">Refresh</button>
           </div>
           <p class="field-hint" style="margin-bottom:12px;">All automated emails sent to customers and to you appear here.</p>

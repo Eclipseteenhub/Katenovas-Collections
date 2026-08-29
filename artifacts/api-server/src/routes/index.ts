@@ -7,6 +7,7 @@ import ordersRouter from "./orders";
 import chatRouter from "./chat";
 import emailLogsRouter from "./emailLogs";
 import notificationsRouter from "./notifications";
+import inboxRouter from "./inbox";
 
 const router: IRouter = Router();
 
@@ -18,5 +19,6 @@ router.use(ordersRouter);
 router.use(chatRouter);
 router.use(emailLogsRouter);
 router.use(notificationsRouter);
+router.use(inboxRouter);
 
 export default router;

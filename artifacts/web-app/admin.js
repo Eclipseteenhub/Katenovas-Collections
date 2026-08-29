@@ -940,8 +940,129 @@ async function initDashboardPage() {
   });
 
   document.getElementById('refreshEmailLogsBtn')?.addEventListener('click', () => renderEmailLogs());
+  document.getElementById('summaryEmailBtn')?.addEventListener('click', async () => {
+    const btn = document.getElementById('summaryEmailBtn');
+    btn.disabled = true; btn.textContent = 'Sending…';
+    try {
+      const res = await apiFetch('/email-logs/summary', { method: 'POST', body: JSON.stringify({ period: 'daily' }) });
+      if (res.success) showToast('Business summary email sent!');
+      else showToast('Summary failed: ' + (res.error || 'unknown'), 'error');
+    } catch (err) { showToast(err.message || 'Failed to send summary.', 'error'); }
+    finally { btn.disabled = false; btn.textContent = 'Send Business Summary'; }
+  });
   initEmailComposer();
   initNotifications();
+  initInbox();
+}
+
+let activeConversationId = null;
+
+async function initInbox() {
+  const listEl = document.getElementById('adminConversationsList');
+  const emptyEl = document.getElementById('noConversations');
+  const detailEl = document.getElementById('conversationDetail');
+  const badge = document.getElementById('inboxBadge');
+  if (!listEl) return;
+
+  async function loadConversations() {
+    try {
+      const data = await apiFetch('/conversations');
+      const convs = data.conversations || [];
+      if (badge) {
+        const unread = data.totalUnread || 0;
+        if (unread > 0) { badge.textContent = unread > 99 ? '99+' : String(unread); badge.classList.remove('hidden'); }
+        else badge.classList.add('hidden');
+      }
+      if (!convs.length) { listEl.innerHTML = ''; if (emptyEl) emptyEl.classList.remove('hidden'); return; }
+      if (emptyEl) emptyEl.classList.add('hidden');
+      listEl.innerHTML = convs.map(c => `
+        <div class="admin-order-row" data-conv="${escHtml(c.id)}" style="cursor:pointer;">
+          <div style="flex:1;min-width:0;">
+            <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
+              <strong>${escHtml(c.customerName || 'Customer')}</strong>
+              ${c.unreadCount > 0 ? `<span style="background:var(--red);color:white;font-size:0.65rem;border-radius:50%;min-width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;padding:0 4px;">${c.unreadCount}</span>` : ''}
+              ${c.priority === 'high' ? `<span style="background:#fdf0d5;color:#a06b0a;font-size:0.65rem;border-radius:12px;padding:2px 8px;">HIGH</span>` : ''}
+            </div>
+            <div style="font-size:0.8rem;color:var(--gray);margin-top:0.2rem;">${escHtml(c.subject || '')}</div>
+            <div style="font-size:0.72rem;color:#aaa;margin-top:0.2rem;">${new Date(c.lastActivityAt).toLocaleString()}</div>
+          </div>
+          <button class="btn btn-sm btn-outline" data-open="${escHtml(c.id)}">Open</button>
+        </div>
+      `).join('');
+      listEl.querySelectorAll('[data-open]').forEach(btn => {
+        btn.addEventListener('click', (e) => { e.stopPropagation(); openConversation(btn.dataset.open); });
+      });
+      listEl.querySelectorAll('[data-conv]').forEach(row => {
+        row.addEventListener('click', () => openConversation(row.dataset.conv));
+      });
+    } catch {}
+  }
+
+  async function openConversation(id) {
+    activeConversationId = id;
+    try {
+      const data = await apiFetch('/conversations/' + id + '/messages');
+      const c = data.conversation, msgs = data.messages || [];
+      detailEl.classList.remove('hidden');
+      document.getElementById('convCustomer').textContent = c.customerName || 'Customer';
+      document.getElementById('convMeta').textContent = [c.customerEmail, c.customerPhone, c.subject].filter(Boolean).join(' • ');
+      const box = document.getElementById('convMessages');
+      box.innerHTML = msgs.length ? msgs.map(m => `
+        <div style="display:flex;${m.sender==='seller'?'justify-content:flex-end':''}">
+          <div style="max-width:80%;padding:0.6rem 0.9rem;border-radius:12px;font-size:0.85rem;${m.sender==='seller'?'background:var(--burgundy);color:white;border-bottom-right-radius:3px;':'background:white;border:1px solid #eee;border-bottom-left-radius:3px;'}">
+            <div>${escHtml(m.content)}</div>
+            <div style="font-size:0.65rem;opacity:0.7;margin-top:0.2rem;">${m.sender} • ${new Date(m.createdAt).toLocaleTimeString()}</div>
+          </div>
+        </div>
+      `).join('') : '<p style="color:var(--gray);font-size:0.85rem;">No messages.</p>';
+      box.scrollTop = box.scrollHeight;
+      document.getElementById('convReplyInput').value = '';
+      document.getElementById('conversationDetail').scrollIntoView({ behavior: 'smooth' });
+      loadConversations();
+    } catch (err) { showToast(err.message || 'Failed to open conversation.', 'error'); }
+  }
+
+  document.getElementById('sendReplyBtn')?.addEventListener('click', async () => {
+    const input = document.getElementById('convReplyInput');
+    const content = input.value.trim();
+    if (!content || !activeConversationId) return;
+    input.value = '';
+    try {
+      await apiFetch('/conversations/' + activeConversationId + '/reply', { method: 'POST', body: JSON.stringify({ content }) });
+      await openConversation(activeConversationId);
+    } catch (err) { showToast(err.message || 'Failed to send reply.', 'error'); }
+  });
+
+  document.getElementById('aiDraftBtn')?.addEventListener('click', async () => {
+    const btn = document.getElementById('aiDraftBtn');
+    if (!activeConversationId) return;
+    btn.disabled = true; btn.textContent = 'Thinking…';
+    try {
+      const res = await apiFetch('/conversations/' + activeConversationId + '/ai-draft', { method: 'POST' });
+      document.getElementById('convReplyInput').value = res.draft || '';
+      showToast('AI draft ready — edit and send.');
+    } catch (err) { showToast(err.message || 'Failed to get AI draft.', 'error'); }
+    finally { btn.disabled = false; btn.textContent = '✨ AI Draft'; }
+  });
+
+  document.getElementById('closeConvBtn')?.addEventListener('click', async () => {
+    if (!activeConversationId) return;
+    try {
+      await apiFetch('/conversations/' + activeConversationId + '/close', { method: 'POST' });
+      detailEl.classList.add('hidden');
+      activeConversationId = null;
+      loadConversations();
+    } catch {}
+  });
+
+  document.getElementById('backInboxBtn')?.addEventListener('click', () => {
+    detailEl.classList.add('hidden');
+    activeConversationId = null;
+  });
+
+  document.getElementById('refreshInboxBtn')?.addEventListener('click', loadConversations);
+  loadConversations();
+  setInterval(loadConversations, 30000);
 }
 
 async function initNotifications() {
